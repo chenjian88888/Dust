@@ -11,7 +11,17 @@ set(SRC_FILE
     src/reference_line/fem_pos_deviation_ipopt_interface.cc
     src/reference_line/fem_pos_deviation_osqp_interface.cc
     src/reference_line/fem_pos_deviation_sqp_osqp_interface.cc
+    src/reference_line/reference_point.cc
     src/planning.cc
+
+    src/common/math_utils.cc
+    src/common/vec2d.cc
+
+    src/lattice/lattice.cc
+
+    src/path/path_matcher.cc
+    src/path/path_points.cc
+    src/path/trajectoryPoint.cc
     
 
 )
@@ -54,6 +64,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
+    include/common
+    include/lattice
+    include/path
     include/planning.h
     include/reference_line
     include ${catkin_INCLUDE_DIRS}

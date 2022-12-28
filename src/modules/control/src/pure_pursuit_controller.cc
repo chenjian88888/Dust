@@ -27,7 +27,7 @@ void purePursuit::run(){
 	ros::Subscriber gps_sub = n_.subscribe("/gps", 10, &purePursuit::gpsCallback, this);
 
     ros::Publisher control_pub = n_.advertise<geometry_msgs::Pose>("/dynamic_waypoints", 10);
-	ros::Rate loop_rate(50);
+	ros::Rate loop_rate(100);
 	while (ros::ok())
 	{
 		// 先订阅到消息再可以发布

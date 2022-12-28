@@ -4,6 +4,8 @@
 namespace dust{
 namespace reference_line{
 
+using namespace dust::lattice_ns;
+
 referenceLine::referenceLine(){
     // ros parameter settings
     ros::param::get("which_smoothers", this->which_smoothers);
@@ -34,8 +36,10 @@ void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
 
 void  referenceLine::run() {
     ROS_INFO("planning start");
-    
-    ros::Rate loop_rate(20);
+
+    lattice latti;// 构造lattice类，创造/referenceLine_smoothed话题空间
+
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {
         /* code */

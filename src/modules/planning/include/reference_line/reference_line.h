@@ -30,6 +30,7 @@
 #include "fem_pos_deviation_osqp_interface.h"
 #include "fem_pos_deviation_sqp_osqp_interface.h"
 #include "fem_pos_deviation_ipopt_interface.h"
+#include "lattice/lattice.h"
 
 namespace dust{
 namespace reference_line{
