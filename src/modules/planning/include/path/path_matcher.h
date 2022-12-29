@@ -20,8 +20,8 @@ public:
   ~PathMatcher() = default;
   // static ReferencePoint MatchToPath(const double s, const std::vector<ReferencePoint> &reference_points);
 
-  // static ReferencePoint MatchToPath(const std::vector<ReferencePoint> &reference_points,
-  //                                   const double x, const double y);
+  static ReferencePoint MatchToPath(const std::vector<ReferencePoint> &reference_points,
+                                    const double x, const double y);
 
   // static PathPoint MatchToPath(const std::vector<PathPoint> &reference_line,
   //                              const double s);
@@ -29,17 +29,17 @@ public:
   // static std::pair<double, double> GetPathFrenetCoordinate(const std::vector<ReferencePoint> &reference_points, const double x,
   //                                                          const double y);
 
-  // static ReferencePoint FindProjectionPoint(const ReferencePoint &p0,
-  //                                           const ReferencePoint &p1, const double x,
-  //                                           const double y);
+  static ReferencePoint FindProjectionPoint(const ReferencePoint &p0,
+                                            const ReferencePoint &p1, const double x,
+                                            const double y);
 
   static bool ComputePathProfile(const std::vector<std::pair<double, double>> &xy_points, std::vector<double> *headings,
                                  std::vector<double> *accumulated_s, std::vector<double> *kappas,
                                  std::vector<double> *dkappas);
   // static void RemoveDuplicates(std::vector<ReferencePoint> *points);
 
-  // static ReferencePoint InterpolateUsingLinearApproximation(const ReferencePoint &p0, const ReferencePoint &p1,
-  //                                                           const double s);
+  static ReferencePoint InterpolateUsingLinearApproximation(const ReferencePoint &p0, const ReferencePoint &p1,
+                                                            const double s);
                                                             
   // static PathPoint InterpolateUsingLinearApproximation(const PathPoint &p0,
   //                                                      const PathPoint &p1,

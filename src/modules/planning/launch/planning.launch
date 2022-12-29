@@ -7,6 +7,8 @@
     <!-- 是否使用曲率约束 -->
     <arg name="curvature_constraint" default="false"/>    
     <param name="apply_curvature_constraint" value="$(arg curvature_constraint)"/>
+    <!-- 是否使用二次规划 -->
+    <arg name="use_lateral_optimization" default="false"/> 
 
     <!-- ui界面 -->        
     <!-- <node pkg="ui_console" type="ui_console" name="interface_console" output="screen" /> -->

@@ -16,11 +16,15 @@
 #include <vector>
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Dense>
 
 #include "reference_point.h"
 #include "path_matcher.h"
 #include "trajectoryPoint.h"
 #include "gps.h"
+#include "PlanningTarget.h"
 
 namespace dust{
 namespace lattice_ns{
@@ -42,17 +46,53 @@ public:
      * 
      * @param pGps 
      */
-    void gpsCallback(const msg_gen::gps &pGps)
+    void gpsCallback(const msg_gen::gps &pGps);
     /**
      * @brief lattice模块规划入口
-     * 
+     *
      */
     void plan();
     /**
      * @brief 计算规划起点
      * 
      */
-    void plan_start_point();
+    void plan_start_point(double &tt);
+    /**
+     * @brief lattice主函数入口
+     * 
+     * @param planning_init_point 
+     * @param planning_target 
+     * @param obstacles 
+     * @param accumulated_s 
+     * @param reference_points 
+     * @param lateral_optimization 
+     * @param init_relative_time 
+     * @param lon_decision_horizon 
+     * @return DiscretizedTrajectory 
+     */
+    DiscretizedTrajectory LatticePlan(
+      const TrajectoryPoint &planning_init_point,
+      const PlanningTarget &planning_target,
+      const std::vector<const Obstacle *> &obstacles,
+      const std::vector<double> &accumulated_s,
+      const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
+      const double &init_relative_time, const double lon_decision_horizon);
+    
+    /**
+     * @brief 规划起点frenet和cartesian坐标转换
+     * 
+     * @param matched_point 
+     * @param cartesian_state 
+     * @param ptr_s 
+     * @param ptr_d 
+     */
+    void ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
+                                std::array<double, 3> *ptr_s, std::array<double, 3> *ptr_d);
+
+  public:
+    std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
+    msg_gen::gps gps_;
+    std::vector<double> gps_flag_;
 
 private:
     // handle
@@ -83,15 +123,14 @@ private:
 
     std::pair<std::vector<double>, std::vector<double>> reference_path; //参考路径点位置（x,y）
     std::vector<double> accumulated_s;                                  // 纵向距离
+    double lon_decision_horizon = 0;// 前视距离
 
     // class
     DiscretizedTrajectory best_path_; //最佳路径
-    std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
-    msg_gen::gps gps_;
 
     // flag
     bool is_first_run = true;
-    std::vector<double> gps_flag_;
+    bool FLAGS_lateral_optimization; //选择二次规划
 };
 
 

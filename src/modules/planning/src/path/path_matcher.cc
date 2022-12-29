@@ -18,44 +18,44 @@
 //   return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
 // }
 
-// ReferencePoint PathMatcher::MatchToPath(const std::vector<ReferencePoint> &reference_points,
-//                                         const double x, const double y)
-// {
-//   // CHECK_GT(reference_line.size(), 0);
+ReferencePoint PathMatcher::MatchToPath(const std::vector<ReferencePoint> &reference_points,
+                                        const double x, const double y)
+{
+  // CHECK_GT(reference_line.size(), 0);
 
-//   auto func_distance_square = [](const ReferencePoint &point, const double x,
-//                                  const double y)
-//   {
-//     double dx = point.x_ - x;
-//     double dy = point.y_ - y;
-//     return dx * dx + dy * dy;
-//   };
+  auto func_distance_square = [](const ReferencePoint &point, const double x,
+                                 const double y)
+  {
+    double dx = point.x_ - x;
+    double dy = point.y_ - y;
+    return dx * dx + dy * dy;
+  };
 
-//   double distance_min = func_distance_square(reference_points.front(), x, y);
-//   std::size_t index_min = 0;
+  double distance_min = func_distance_square(reference_points.front(), x, y);
+  std::size_t index_min = 0;
 
-//   for (std::size_t i = 1; i < reference_points.size(); ++i)
-//   {
-//     double distance_temp = func_distance_square(reference_points[i], x, y);
-//     if (distance_temp < distance_min)
-//     {
-//       distance_min = distance_temp;
-//       index_min = i;
-//     }
-//   }
+  for (std::size_t i = 1; i < reference_points.size(); ++i)
+  {
+    double distance_temp = func_distance_square(reference_points[i], x, y);
+    if (distance_temp < distance_min)
+    {
+      distance_min = distance_temp;
+      index_min = i;
+    }
+  }
 
-//   std::size_t index_start = (index_min == 0) ? index_min : index_min - 1;
-//   std::size_t index_end =
-//       (index_min + 1 == reference_points.size()) ? index_min : index_min + 1;
+  std::size_t index_start = (index_min == 0) ? index_min : index_min - 1;
+  std::size_t index_end =
+      (index_min + 1 == reference_points.size()) ? index_min : index_min + 1;
 
-//   if (index_start == index_end)
-//   {
-//     return reference_points[index_start];
-//   }
+  if (index_start == index_end)
+  {
+    return reference_points[index_start];
+  }
 
-//   return FindProjectionPoint(reference_points[index_start],
-//                              reference_points[index_end], x, y);
-// }
+  return FindProjectionPoint(reference_points[index_start],
+                             reference_points[index_end], x, y);
+}
 
 // PathPoint PathMatcher::MatchToPath(const std::vector<PathPoint> &reference_line,
 //                                    const double s)
@@ -98,44 +98,44 @@
 //   return relative_coordinate;
 // }
 
-// ReferencePoint PathMatcher::FindProjectionPoint(const ReferencePoint &p0,
-//                                                 const ReferencePoint &p1, const double x,
-//                                                 const double y)
-// {
-//   double v0x = x - p0.x_;
-//   double v0y = y - p0.y_;
+ReferencePoint PathMatcher::FindProjectionPoint(const ReferencePoint &p0,
+                                                const ReferencePoint &p1, const double x,
+                                                const double y)
+{
+  double v0x = x - p0.x_;
+  double v0y = y - p0.y_;
 
-//   double v1x = p1.x_ - p0.x_;
-//   double v1y = p1.y_ - p0.y_;
+  double v1x = p1.x_ - p0.x_;
+  double v1y = p1.y_ - p0.y_;
 
-//   double v1_norm = std::sqrt(v1x * v1x + v1y * v1y);
-//   double dot = v0x * v1x + v0y * v1y;
+  double v1_norm = std::sqrt(v1x * v1x + v1y * v1y);
+  double dot = v0x * v1x + v0y * v1y;
 
-//   double delta_s = dot / v1_norm;
-//   return InterpolateUsingLinearApproximation(p0, p1, p0.accumulated_s_ + delta_s);
-// }
+  double delta_s = dot / v1_norm;
+  return InterpolateUsingLinearApproximation(p0, p1, p0.accumulated_s_ + delta_s);
+}
 
-// ReferencePoint PathMatcher::InterpolateUsingLinearApproximation(const ReferencePoint &p0, const ReferencePoint &p1,
-//                                                                 const double s)
-// {
-//   double s0 = p0.s();
-//   double s1 = p1.s();
+ReferencePoint PathMatcher::InterpolateUsingLinearApproximation(const ReferencePoint &p0, const ReferencePoint &p1,
+                                                                const double s)
+{
+  double s0 = p0.s();
+  double s1 = p1.s();
 
-//   ReferencePoint path_point;
-//   double weight = (s - s0) / (s1 - s0);
-//   double x = (1 - weight) * p0.get_x() + weight * p1.get_x();
-//   double y = (1 - weight) * p0.get_y() + weight * p1.get_y();
-//   double theta = common::math::slerp(p0.heading(), p0.s(), p1.heading(), p1.s(), s);
-//   double kappa = (1 - weight) * p0.kappa() + weight * p1.kappa();
-//   double dkappa = (1 - weight) * p0.dkappa() + weight * p1.dkappa();
-//   path_point.set_x(x);
-//   path_point.set_y(y);
-//   path_point.set_heading(theta);
-//   path_point.set_kappa(kappa);
-//   path_point.set_dkappa(dkappa);
-//   path_point.set_s(s);
-//   return path_point;
-// }
+  ReferencePoint path_point;
+  double weight = (s - s0) / (s1 - s0);
+  double x = (1 - weight) * p0.get_x() + weight * p1.get_x();
+  double y = (1 - weight) * p0.get_y() + weight * p1.get_y();
+  double theta = common::math::slerp(p0.heading(), p0.s(), p1.heading(), p1.s(), s);
+  double kappa = (1 - weight) * p0.kappa() + weight * p1.kappa();
+  double dkappa = (1 - weight) * p0.dkappa() + weight * p1.dkappa();
+  path_point.set_x(x);
+  path_point.set_y(y);
+  path_point.set_heading(theta);
+  path_point.set_kappa(kappa);
+  path_point.set_dkappa(dkappa);
+  path_point.set_s(s);
+  return path_point;
+}
 
 // PathPoint PathMatcher::InterpolateUsingLinearApproximation(const PathPoint &p0,
 //                                                            const PathPoint &p1,

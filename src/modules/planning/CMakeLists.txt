@@ -16,6 +16,7 @@ set(SRC_FILE
 
     src/common/math_utils.cc
     src/common/vec2d.cc
+    src/common/PlanningTarget.cc
 
     src/lattice/lattice.cc
 
@@ -66,6 +67,7 @@ include_directories(
     include
     include/common
     include/lattice
+    include/msg_gen
     include/path
     include/planning.h
     include/reference_line

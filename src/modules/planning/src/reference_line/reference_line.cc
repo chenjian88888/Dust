@@ -1,5 +1,6 @@
 #include "reference_line.h"
-
+#include <iostream>
+#include <vector>
 
 namespace dust{
 namespace reference_line{
@@ -36,12 +37,14 @@ void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
 
 void  referenceLine::run() {
     ROS_INFO("planning start");
-
-    lattice latti;// 构造lattice类，创造/referenceLine_smoothed话题空间
+    
+    
+    lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间
 
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
+        
         /* code */
         // std::cout << "referenceline_.size: " << referenceline_.poses.size() << std::endl;
         if (referenceline_.poses.size() > 0)
