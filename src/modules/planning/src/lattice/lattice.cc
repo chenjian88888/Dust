@@ -3,15 +3,12 @@
 namespace dust{
 namespace lattice_ns{
 
-// global param
-std::pair<std::vector<double>, std::vector<double>> reference_path; //参考路径点位置（x,y）
-std::vector<double> accumulated_s;                        //纵向距离
-std::vector<ReferencePoint> reference_points;             //参考路径点参数
-
 lattice::lattice(){
 
     // subscriber
-    referenceLine_subscriber_ = n_.subscribe("/referenceLine_smoothed", 10, &lattice::referenceLineCallback, this); //订阅
+    referenceLine_subscriber_ = n_.subscribe("/referenceLine_smoothed", 10, &lattice::referenceLineCallback, this);
+
+    gps_sub_ = n_.subscribe("/gps", 10, &lattice::gpsCallback, this);
 
     // publisher
 }
@@ -65,7 +62,13 @@ void lattice::referenceLineCallback(const nav_msgs::Path &path_point)
   }
 }
 
+void lattice::gpsCallback(const msg_gen::gps &pGps){
+	gps_ = pGps;
+    gps_flag_(1,0);
+}
+
 void lattice::plan() {
+    ROS_INFO("lattice plan start");
     //初始参数的输入
     InitialConditions lattice_ic = {
         d0,   // 初始的横向偏移值 [m]
@@ -87,12 +90,34 @@ void lattice::plan() {
         kappa_init,
         dkappa_init,
     };
-    //创建起点参数
+    plan_start_point();
+    // 创建起点参数
     TrajectoryPoint planning_init_point(lattice_ic);
-    //轨迹生成
+    // 轨迹生成
     // PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
     // best_path = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
     //                                  FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
+}
+
+void lattice::plan_start_point() {
+    if (this->is_first_run){
+        // 第一次运行
+        this->is_first_run = false;
+        x_init = gps_.posX;// 定位
+        y_init = gps_.posY;
+        theta_init = gps_.oriZ;
+        kappa_init = 0;
+        ds0 = 0;
+        dds0 = 0;
+        init_relative_time = + 0.1;
+    } else{
+        // 非第一次运行
+        double x_cur = gps_.posX;// 定位
+        double y_cur = gps_.posY;
+        double theta_cur = gps_.oriZ;
+        double kappa_cur = 0;
+        double dt = 0.1;
+    }
 }
 
 } // namespace lattice

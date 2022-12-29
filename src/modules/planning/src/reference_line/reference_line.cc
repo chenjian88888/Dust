@@ -48,6 +48,10 @@ void  referenceLine::run() {
         {
             referenceLine_pub_.publish(referenceline_);
         }
+        // 确保gps和reference_points收到数据之后再进行
+        if (latti.reference_points.size() > 0 && latti.gps_flag_.size() > 0){
+          latti.plan();
+        }
         ros::spinOnce();
         loop_rate.sleep();
     }

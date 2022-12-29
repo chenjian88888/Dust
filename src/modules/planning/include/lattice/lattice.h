@@ -1,5 +1,5 @@
 /**
- * @file lattice.h 主要是订阅topic /referenceLine_smoothed，为参考线计算heading和kappa生成reference_point，进行速度规划和路径规划
+ * @file lattice.h 主要是订阅topic /referenceLine_smoothed，为参考线计算heading和kappa生成reference_point，之后进行速度规划和路径规划
  * @author feifei (gaolingfei@buaa.edu.cn)
  * @brief 
  * @version 0.1
@@ -20,6 +20,7 @@
 #include "reference_point.h"
 #include "path_matcher.h"
 #include "trajectoryPoint.h"
+#include "gps.h"
 
 namespace dust{
 namespace lattice_ns{
@@ -36,16 +37,30 @@ public:
      * @param path_point 
      */
     void referenceLineCallback(const nav_msgs::Path &path_point);
-
+    /**
+     * @brief gps的回调函数
+     * 
+     * @param pGps 
+     */
+    void gpsCallback(const msg_gen::gps &pGps)
+    /**
+     * @brief lattice模块规划入口
+     * 
+     */
     void plan();
+    /**
+     * @brief 计算规划起点
+     * 
+     */
+    void plan_start_point();
 
-  private:
+private:
     // handle
     ros::NodeHandle n_;
     // publisher
   	// ros::Publisher ;
   	// subscriber
-  	ros::Subscriber referenceLine_subscriber_;
+  	ros::Subscriber referenceLine_subscriber_, gps_sub_;
 
     // param
     std::vector<double> path_point_flag_; // 添加flag，确保参考线平滑一次
@@ -66,8 +81,17 @@ public:
     double kappa_init;
     double dkappa_init;
 
+    std::pair<std::vector<double>, std::vector<double>> reference_path; //参考路径点位置（x,y）
+    std::vector<double> accumulated_s;                                  // 纵向距离
+
     // class
-    DiscretizedTrajectory best_path; //最佳路径
+    DiscretizedTrajectory best_path_; //最佳路径
+    std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
+    msg_gen::gps gps_;
+
+    // flag
+    bool is_first_run = true;
+    std::vector<double> gps_flag_;
 };
 
 
