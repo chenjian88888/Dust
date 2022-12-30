@@ -1,7 +1,7 @@
 #include "Obstacle_avoid.h"
 #include "path_matcher.h"
 
-lanelet::LaneletMapPtr map_;
+
 
 Obstacle_avoid::Obstacle_avoid()
 {
@@ -92,21 +92,21 @@ bool Obstacle_avoid::Inside_rectangle(PPoint p1, PPoint p2, PPoint p3, PPoint p4
   return false;
 }
 
-bool Obstacle_avoid::GetClosestLanelet(geometry_msgs::Pose &search_pose, lanelet::LaneletMapPtr &lanelet_map_ptr_,
-                                       lanelet::Lanelet *closest_lanelet, double distance_thresh)
-{
-  lanelet::BasicPoint2d search_point(search_pose.position.x, search_pose.position.y);
-  std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelet =
-      lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 1);
+// bool Obstacle_avoid::GetClosestLanelet(geometry_msgs::Pose &search_pose, lanelet::LaneletMapPtr &lanelet_map_ptr_,
+//                                        lanelet::Lanelet *closest_lanelet, double distance_thresh)
+// {
+//   lanelet::BasicPoint2d search_point(search_pose.position.x, search_pose.position.y);
+//   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelet =
+//       lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 1);
 
-  if (nearest_lanelet.empty() || nearest_lanelet.front().first > distance_thresh)
-  {
-    return false;
-  }
+//   if (nearest_lanelet.empty() || nearest_lanelet.front().first > distance_thresh)
+//   {
+//     return false;
+//   }
 
-  *closest_lanelet = nearest_lanelet.front().second;
-  return true;
-}
+//   *closest_lanelet = nearest_lanelet.front().second;
+//   return true;
+// }
 
 //障碍物有效区域显示
 void Obstacle_avoid::visualization(PPoint center, double ego_heading, double length, double width)
@@ -199,10 +199,10 @@ void Obstacle_avoid::visualization_points(PPoint ob_left_front, PPoint ob_left_b
 void Obstacle_avoid::Publish(std::pair<std::vector<double>, std::vector<double>> &move_referenceline)
 {
   referenceline.poses.clear();
-  referenceline.header.frame_id = Frame_id;
+  referenceline.header.frame_id = "world";
   referenceline.header.stamp = ros::Time::now();
   geometry_msgs::PoseStamped pose_stamp;
-  pose_stamp.header.frame_id = Frame_id;
+  pose_stamp.header.frame_id = "world";
   pose_stamp.header.stamp = ros::Time::now();
 
   for (int i = 0; i < move_referenceline.first.size(); i++)
@@ -218,7 +218,7 @@ void Obstacle_avoid::Publish(std::pair<std::vector<double>, std::vector<double>>
 //产生pre_timepre_time秒的预测
 Prediction::Ob_Trajectory Obstacle_avoid::Generater_Trajectory(geometry_msgs::Pose ob_pos, double pre_time, double obstacle_threa, double obstacle_velocity)
 {
-  prediction::Ob_Trajectory result;
+  Prediction::Ob_Trajectory result;
   std::vector<TrajectoryPoint> Trajectories;
   Eigen::MatrixXd ob_points;
   ob_points = Eigen::MatrixXd::Zero(2, 3); //初始化零矩阵

@@ -1,10 +1,5 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
-#include <lanelet2_extension/utility/utilities.h>
-#include "object_msgs/DynamicObjectArray.h"
-#include "object_msgs/Semantic.h"
-#include "object_msgs/Shape.h"
-#include "object_msgs/State.h"
 #include <uuid_msgs/UniqueID.h>
 #include "Obstacle_avoid.h"
 #include "math_utils.h"
@@ -52,12 +47,12 @@ public:
   void Show_ob_prediction(geometry_msgs::Pose &obstacle_trajectory_, const TrajectoryPoint trajectory_point_);
   void visualization(const std::vector<Obstacle> Obstacles_);
 
-  const prediction::Ob_Trajectory &Trajectory() const
+  const Prediction::Ob_Trajectory &Trajectory() const
   {
     return trajectory_;
   }
 
-  void SetTrajectory(const prediction::Ob_Trajectory trajectory)
+  void SetTrajectory(const Prediction::Ob_Trajectory trajectory)
   {
     trajectory_ = trajectory;
   }
@@ -67,7 +62,7 @@ private:
   ST_Boundary path_st_boundary_;
   ObjectDecisionType lateral_decision_;
   ObjectDecisionType longitudinal_decision_;
-  prediction::Ob_Trajectory trajectory_; //动态障碍物的预测轨迹
+  Prediction::Ob_Trajectory trajectory_; //动态障碍物的预测轨迹
   common::math::Polygon2d perception_polygon_;
   Box2d perception_bounding_box_;
  
@@ -76,6 +71,8 @@ private:
   double eff_dis;
   std::vector<std::pair<double, double>> pinnacles;
 
+  // handle
+  ros::NodeHandle n_;
   // Publisher和Subscriber
   ros::Subscriber obstacle_sub_;
   ros::Publisher Obstacle_Prediction;
@@ -113,7 +110,7 @@ public:
   //障碍物的速度
   double obstacle_velocity;
   //障碍物朝向
-  double obstacle_threa;
+  double obstacle_theta;
 
   //扣一圈的半径大小，适用于frenet下的圆形和方形
   double obstacle_radius;

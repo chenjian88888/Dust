@@ -1,5 +1,8 @@
 #ifndef __plan_init__
 #define __plan_init__
+#include "Configs.h"
+
+const Param_Configs Config_;             //所有参数
 // Lattice_dynamic and EM_dynamic
 struct InitialConditions
 {

@@ -6,6 +6,7 @@ project(planning)
 add_compile_options(-std=c++14)
 
 set(SRC_FILE
+    src/reference_line/cartesian_frenet_conversion.cc
     src/reference_line/reference_line.cc
     src/reference_line/cos_theta_ipopt_interface.cc
     src/reference_line/fem_pos_deviation_ipopt_interface.cc
@@ -14,15 +15,20 @@ set(SRC_FILE
     src/reference_line/reference_point.cc
     src/planning.cc
 
+    src/common/box2d.cc
+    src/common/Config.cc
+    src/common/line_segment2d.cc
     src/common/math_utils.cc
-    src/common/vec2d.cc
     src/common/PlanningTarget.cc
+    src/common/polygon2d.cc
+    src/common/vec2d.cc
 
     src/lattice/lattice.cc
 
-    src/obstacle/Obstacle.cc
-    src/obstacle/Obstacle_avoid.cc
+    src/obstacle/boundarys.cc
     src/obstacle/Ob_prediction_trajectory.cc
+    src/obstacle/Obstacle_avoid.cc
+    src/obstacle/Obstacle.cc
 
     src/path/path_matcher.cc
     src/path/path_points.cc
@@ -51,6 +57,7 @@ generate_messages(DEPENDENCIES
 
 find_package(Eigen3 QUIET)
 find_package(OsqpEigen QUIET)
+find_package(yaml-cpp REQUIRED)
 
 catkin_package(
     INCLUDE_DIRS include
@@ -80,4 +87,4 @@ include_directories(
 )
 
 add_executable(planning_node ${SRC_FILE})
-target_link_libraries(planning_node ${catkin_LIBRARIES} -lxerces-c osqp adolc ipopt)
+target_link_libraries(planning_node ${catkin_LIBRARIES} -lxerces-c osqp adolc ipopt yaml-cpp)

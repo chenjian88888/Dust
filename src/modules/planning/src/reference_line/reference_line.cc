@@ -42,8 +42,10 @@ void  referenceLine::run() {
     lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间
 
     ros::Rate loop_rate(10);
+    int n = 0;
     while (ros::ok())
     {
+
         
         /* code */
         // std::cout << "referenceline_.size: " << referenceline_.poses.size() << std::endl;
@@ -52,8 +54,11 @@ void  referenceLine::run() {
             referenceLine_pub_.publish(referenceline_);
         }
         // 确保gps和reference_points收到数据之后再进行
-        if (latti.reference_points.size() > 0 && latti.gps_flag_.size() > 0){
-          latti.plan();
+        if (latti.reference_points.size() > 0 && latti.gps_flag_.size() > 0)
+        {
+          std::cout << "n = " << n << std::endl;
+        n++;
+            latti.plan();
         }
         ros::spinOnce();
         loop_rate.sleep();

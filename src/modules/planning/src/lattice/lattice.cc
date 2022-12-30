@@ -1,5 +1,5 @@
 #include "lattice.h"
-
+std::vector<Obstacle> AllObstacle;                        //感知一帧识别到的所有障碍物
 namespace dust{
 namespace lattice_ns{
 
@@ -19,14 +19,16 @@ lattice::lattice(){
 
 void lattice::referenceLineCallback(const nav_msgs::Path &path_point)
 {
-  ROS_ERROR("reference line received size:%ld",path_point.poses.size());
-  reference_path.first.clear();
-  reference_path.second.clear();
-  accumulated_s.clear();
-  reference_points.clear();
-  // 计算参考点的kappa、theta，只需要计算一次
-  if (path_point.poses.size() > 0 && path_point_flag_.size() < 0)
-  {
+    
+    
+    // 计算参考点的kappa、theta，只需要计算一次
+    if (path_point.poses.size() > 0 && path_point_flag_.size() < 1)
+    {
+      reference_path.first.clear();
+      reference_path.second.clear();
+      accumulated_s.clear();
+      reference_points.clear();
+
       path_point_flag_.push_back(path_point.poses[0].pose.position.x);
       std::vector<double> headings;
       std::vector<double> kappas;
@@ -66,16 +68,20 @@ void lattice::referenceLineCallback(const nav_msgs::Path &path_point)
 }
 
 void lattice::gpsCallback(const msg_gen::gps &pGps){
-	gps_ = pGps;
-    gps_flag_ = {1};
+  gps_ = pGps;
+  gps_flag_ = {1};
 }
 
 void lattice::plan() {
     ROS_INFO("lattice plan start");
 
-    std::vector<Obstacle> AllObstacle;                        //感知一帧识别到的所有障碍物
+    
     // 订阅障碍物
     Obstacle ob(true); // 实例化类，构造函数订阅障碍物
+    std::vector<const Obstacle *> obstacles; // Apollo是这种类型
+    for (size_t i = 0; i < AllObstacle.size(); i++){
+      obstacles.emplace_back(&AllObstacle[i]);
+    }
     //初始参数的输入
     InitialConditions lattice_ic = {
         d0,   // 初始的横向偏移值 [m]
@@ -106,13 +112,14 @@ void lattice::plan() {
     // PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
     PlanningTarget planning_target(10, accumulated_s); // 目标
     lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
-    best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
-                                     FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
+    // best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
+    //                                  FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
 }
 
 void lattice::plan_start_point(double &current_time) {
     if (this->is_first_run){
         // 第一次运行
+        std::cout << "第1次运行" << std::endl;
         this->is_first_run = false;
         x_init = gps_.posX;// 定位
         y_init = gps_.posY;
@@ -128,6 +135,7 @@ void lattice::plan_start_point(double &current_time) {
         init_relative_time = current_time + 0.1;
     } else{
         // 非第一次运行
+        std::cout << "第2次运行" << std::endl;
         double x_cur = gps_.posX;// 定位
         double y_cur = gps_.posY;
         double theta_cur = gps_.oriZ;
@@ -138,12 +146,14 @@ void lattice::plan_start_point(double &current_time) {
         double ay_cur = gps_.accelY;
         double dt = 0.1;
         int index = 0;
-        for (int i = 0; i < - 1;++i){
+        ROS_INFO("11111");
+        for (int i = 0; i < best_path_.size()- 1;++i){
             if ( best_path_[i].relative_time <= current_time &&  best_path_[i + 1].relative_time > current_time){
                 index = i;
                 break;
             }
         }
+        ROS_INFO("2222");
         // 上一周期规划的本周期车辆应该在的位置
         double pre_x_desire = best_path_[index].x;
         double pre_y_desire = best_path_[index].y;
@@ -176,7 +186,7 @@ void lattice::plan_start_point(double &current_time) {
         else {
           ROS_INFO("good control");
           int index_good = 0;
-          for (int i = 0; i < -1; ++i){
+          for (int i = 0; i < best_path_.size() - 1; ++i){
             if (best_path_[i].relative_time <= current_time+0.1 && best_path_[i + 1].relative_time > current_time+0.1)
             {
               index_good = i;
@@ -214,7 +224,6 @@ DiscretizedTrajectory lattice::LatticePlan(
 {
   //ROS_WARN("start_lattice");
   DiscretizedTrajectory Optim_trajectory;
-
   // 1. compute the matched point of the init planning point on the reference line.经过投影后的匹配点
   ReferencePoint matched_point = PathMatcher::MatchToPath(reference_points, planning_init_point.path_point().x,
                                                           planning_init_point.path_point().y);
@@ -222,9 +231,10 @@ DiscretizedTrajectory lattice::LatticePlan(
   // 2. according to the matched point, compute the init state in Frenet frame.
   std::array<double, 3> init_s;
   std::array<double, 3> init_d;
-  // ComputeInitFrenetState(matched_point, planning_init_point, &init_s, &init_d);
+  ComputeInitFrenetState(matched_point, planning_init_point, &init_s, &init_d);
 
-  // //与Apollo不同，我们的前探距离不加上init_s[0]，因为我们的仿真的参考线不长
+
+  //与Apollo不同，我们的前探距离不加上init_s[0]，因为我们的仿真的参考线不长
   // auto ptr_path_time_graph = std::make_shared<PathTimeGraph>(obstacles, reference_points, init_s[0],
   //                                                            init_s[0] + 20, //前瞻多少m lon_decision_horizon
   //                                                            0.0, Config_.FLAGS_trajectory_time_length, init_d);
@@ -299,17 +309,17 @@ DiscretizedTrajectory lattice::LatticePlan(
   // return Optim_trajectory;
 }
 
-// void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
-//                             std::array<double, 3> *ptr_s, std::array<double, 3> *ptr_d)
-// {
-//   CartesianFrenetConverter::cartesian_to_frenet(
-//       matched_point.accumulated_s_, matched_point.x_, matched_point.y_,
-//       matched_point.heading_, matched_point.kappa_, matched_point.dkappa_,
-//       cartesian_state.path_point().x, cartesian_state.path_point().y,
-//       cartesian_state.v, cartesian_state.a,
-//       cartesian_state.path_point().theta,
-//       cartesian_state.path_point().kappa, ptr_s, ptr_d);
-// }
+void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
+                            std::array<double, 3> *ptr_s, std::array<double, 3> *ptr_d)
+{
+  CartesianFrenetConverter::cartesian_to_frenet(
+      matched_point.accumulated_s_, matched_point.x_, matched_point.y_,
+      matched_point.heading_, matched_point.kappa_, matched_point.dkappa_,
+      cartesian_state.path_point().x, cartesian_state.path_point().y,
+      cartesian_state.v, cartesian_state.a,
+      cartesian_state.path_point().theta,
+      cartesian_state.path_point().kappa, ptr_s, ptr_d);
+}
 
 } // namespace lattice
 } // namespace dust

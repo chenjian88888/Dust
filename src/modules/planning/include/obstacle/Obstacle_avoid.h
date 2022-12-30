@@ -15,8 +15,7 @@
 #include <nav_msgs/Path.h>
 #include <eigen3/Eigen/Dense>
 
-#include "CubicSpline2D.h"
-#include "path_struct.h"
+// #include "CubicSpline2D.h"
 #include "trajectoryPoint.h"
 #include "Ob_prediction_trajectory.h"
 
@@ -63,8 +62,8 @@ public:
   double getCross(PPoint p1, PPoint p2, PPoint p);
   bool Inside_rectangle(PPoint p1, PPoint p2, PPoint p3, PPoint p4, PPoint p);
 
-  bool GetClosestLanelet(geometry_msgs::Pose &search_pose, lanelet::LaneletMapPtr &lanelet_map_ptr_,
-                         lanelet::Lanelet *closest_lanelet, double distance_thresh);
+  // bool GetClosestLanelet(geometry_msgs::Pose &search_pose, lanelet::LaneletMapPtr &lanelet_map_ptr_,
+  //                        lanelet::Lanelet *closest_lanelet, double distance_thresh);
 
   struct Point3d_s
   {

@@ -1,6 +1,6 @@
 #include "Obstacle.h"
 
-//在有效范围内的所有障碍物
+// 在有效范围内的所有障碍物
 PPoint front_left;
 PPoint back_left;
 PPoint back_right;
@@ -20,8 +20,7 @@ Obstacle::Obstacle(bool public_obstacle)
   //订阅感知的障碍物
   if (public_obstacle == true)
   {
-    obstacle_sub_ = nh_.subscribe<msg_gen::obstacle>("/Obstacles", 10, &Obstacle::setObstacles, this);
-    msg_gen::obstacle obs;
+    obstacle_sub_ = n_.subscribe<msg_gen::obstacle>("/ground_truth", 10, &Obstacle::setObstacles, this);
   }
 }
 
@@ -44,22 +43,22 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
       Obstacle obs;
       /*-------------------------------------每种形状都有的基本信息----------------------------------------*/
       //中心点
-      obs.centerpoint.position.x = msgs->obstacle[i].x;
-      obs.centerpoint.position.y = msgs->obstacle[i].y;
+      obs.centerpoint.position.x = msgs->obstacle[i].posX;
+      obs.centerpoint.position.y = msgs->obstacle[i].posY;
       obs.centerpoint.position.z = 0; //压缩二维
 
       obs.obstacle_id = msgs->obstacle[i].id;              // id
-      obs.obstacle_type = msgs->obstacle[i].type; //类型
+      obs.obstacle_type = msgs->obstacle[i].type.SimOne_Obstacle_Type; //类型
       // obs.obstacle_shape = msgs->obstacle[i].shape.type;   //形状
       //朝向(要根感知确认一下)
-      obs.obstacle_threa = msgs->obstacle[i].oriZ;
+      obs.obstacle_theta = msgs->obstacle[i].oriZ;
       //时间戳
       // obs.timestamp_ = msgs->header.stamp;
       //线速度
       obs.obstacle_velocity = msgs->obstacle[i].velX;
       if (obs.obstacle_velocity > 0.2) //动态障碍物
       {
-        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 4, obs.obstacle_threa, obs.obstacle_velocity);
+        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 4, obs.obstacle_theta, obs.obstacle_velocity);
         obs.SetTrajectory(ob_tray);
       }
 
@@ -73,23 +72,23 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
       /*--------------------------------------不同形状有差别的信息-----------------------------------------*/
       // std::cout << "shape:" << msgs->objects[i].shape.type << std::endl;
 
-      if (msgs->objects[i].shape.type == 0) //方形：自行车，车辆
+      if (msgs->obstacle[i].type.SimOne_Obstacle_Type == 6) //Car
       {
         obs.pinnacle.poses.clear(); //顶点暂时为空
         obs.obstacle_radius =
-            sqrt(pow(msgs->objects[i].shape.dimensions.x, 2) + pow(msgs->objects[i].shape.dimensions.y, 2)) / 2;
+            sqrt(pow(msgs->obstacle[i].length, 2) + pow(msgs->obstacle[i].width, 2)) / 2;
         //长和宽
-        obs.obstacle_length = msgs->objects[i].shape.dimensions.y;
-        obs.obstacle_width = msgs->objects[i].shape.dimensions.x;
-        obs.obstacle_height = msgs->objects[i].shape.dimensions.z;
+        obs.obstacle_length = msgs->obstacle[i].length;
+        obs.obstacle_width = msgs->obstacle[i].width;
+        obs.obstacle_height = msgs->obstacle[i].height;
       }
-      else if (msgs->objects[i].shape.type == 1) //圆形：人
+      else if (msgs->obstacle[i].type.SimOne_Obstacle_Type == 4) //圆形：Pedestrian
       {
-        obs.obstacle_radius = msgs->objects[i].shape.dimensions.x; //半径
+        obs.obstacle_radius = msgs->obstacle[i].length; //半径
         //顶点
         obs.pinnacle.poses.clear();
         PPoint ob_center(obs.centerpoint.position.x, obs.centerpoint.position.y);
-        oba.CalculateCarBoundaryPoint(1, 1, ob_center, obs.obstacle_threa, ob_left_front, ob_left_buttom,
+        oba.CalculateCarBoundaryPoint(1, 1, ob_center, obs.obstacle_theta, ob_left_front, ob_left_buttom,
                                       ob_right_buttom, ob_right_front);
         // oba.visualization_points(ob_left_front, ob_left_buttom, ob_right_buttom, ob_right_front);//显示障碍物顶点
 
@@ -108,31 +107,31 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
           obs.polygon_points.push_back(Vec2d(ob_vector[j].x, ob_vector[j].y));
         }
         //长和宽（假设）
-        obs.obstacle_length = msgs->objects[i].shape.dimensions.x;
-        obs.obstacle_width = msgs->objects[i].shape.dimensions.y;
-        obs.obstacle_height = msgs->objects[i].shape.dimensions.z;
+        obs.obstacle_length = msgs->obstacle[i].length;
+        obs.obstacle_width = msgs->obstacle[i].width;
+        obs.obstacle_height = msgs->obstacle[i].height;
       }
-      else if (msgs->objects[i].shape.type == 2) //多边形:未知
-      {
-        //顶点
-        obs.pinnacle.poses.clear();
-        for (size_t j = 0; j < msgs->objects[i].shape.footprint.points.size(); j++)
-        {
-          geometry_msgs::Pose sds;
-          sds.position.x = msgs->objects[i].shape.footprint.points[j].x;
-          sds.position.y = msgs->objects[i].shape.footprint.points[j].y;
-          sds.position.z = 0; //压缩二维
-          obs.pinnacle.poses.push_back(sds);
-          obs.polygon_points.push_back(Vec2d(msgs->objects[i].shape.footprint.points[j].x, msgs->objects[i].shape.footprint.points[j].y));
-        }
+      // else if (msgs->objects[i].shape.type == 2) //多边形:未知
+      // {
+      //   //顶点
+      //   obs.pinnacle.poses.clear();
+      //   for (size_t j = 0; j < msgs->objects[i].shape.footprint.points.size(); j++)
+      //   {
+      //     geometry_msgs::Pose sds;
+      //     sds.position.x = msgs->objects[i].shape.footprint.points[j].x;
+      //     sds.position.y = msgs->objects[i].shape.footprint.points[j].y;
+      //     sds.position.z = 0; //压缩二维
+      //     obs.pinnacle.poses.push_back(sds);
+      //     obs.polygon_points.push_back(Vec2d(msgs->objects[i].shape.footprint.points[j].x, msgs->objects[i].shape.footprint.points[j].y));
+      //   }
 
-        //半径为0
-        obs.obstacle_radius = 0;
-        //长和宽（假设）
-        obs.obstacle_length = msgs->objects[i].shape.dimensions.x;
-        obs.obstacle_width = msgs->objects[i].shape.dimensions.y;
-        obs.obstacle_height = msgs->objects[i].shape.dimensions.z;
-      }
+      //   //半径为0
+      //   obs.obstacle_radius = 0;
+      //   //长和宽（假设）
+      //   obs.obstacle_length = msgs->objects[i].shape.dimensions.x;
+      //   obs.obstacle_width = msgs->objects[i].shape.dimensions.y;
+      //   obs.obstacle_height = msgs->objects[i].shape.dimensions.z;
+      // }
 
       AllObstacle.push_back(obs);
     }
@@ -192,7 +191,7 @@ bool Obstacle::HasLongitudinalDecision() const
 Box2d Obstacle::PerceptionBoundingBox() const
 {
   //必须在订阅之后调用
-  return Box2d({centerpoint.position.x, centerpoint.position.y}, obstacle_threa, obstacle_length, obstacle_width);
+  return Box2d({centerpoint.position.x, centerpoint.position.y}, obstacle_theta, obstacle_length, obstacle_width);
 }
 
 Box2d Obstacle::GetBoundingBox(const TrajectoryPoint &point) const
@@ -212,7 +211,7 @@ TrajectoryPoint Obstacle::GetPointAtTime(const double relative_time) const
     point.set_x(centerpoint.position.x);
     point.set_y(centerpoint.position.y);
     point.set_z(0);
-    point.set_theta(obstacle_threa);
+    point.set_theta(obstacle_theta);
     point.set_s(0.0);
     point.set_kappa(0.0);
     point.set_dkappa(0.0);
@@ -262,7 +261,7 @@ const common::math::Polygon2d &Obstacle::PerceptionPolygon() const
 void Obstacle::visualization(const std::vector<Obstacle> Obstacles_)
 {
   geometry_msgs::PoseArray obstacle_trajectories_;
-  obstacle_trajectories_.header.frame_id = Frame_id;
+  obstacle_trajectories_.header.frame_id = "world";
   obstacle_trajectories_.header.stamp = ros::Time::now();
   for (auto &obstacle : Obstacles_)
   {
