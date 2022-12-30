@@ -72,6 +72,10 @@ void lattice::gpsCallback(const msg_gen::gps &pGps){
 
 void lattice::plan() {
     ROS_INFO("lattice plan start");
+
+    std::vector<Obstacle> AllObstacle;                        //感知一帧识别到的所有障碍物
+    // 订阅障碍物
+    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
     //初始参数的输入
     InitialConditions lattice_ic = {
         d0,   // 初始的横向偏移值 [m]
@@ -170,7 +174,7 @@ void lattice::plan_start_point(double &current_time) {
             init_relative_time = current_time + 0.1;
         }
         else {
-          ROS_INFO("control is good");
+          ROS_INFO("good control");
           int index_good = 0;
           for (int i = 0; i < -1; ++i){
             if (best_path_[i].relative_time <= current_time+0.1 && best_path_[i + 1].relative_time > current_time+0.1)

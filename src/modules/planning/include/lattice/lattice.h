@@ -25,6 +25,7 @@
 #include "trajectoryPoint.h"
 #include "gps.h"
 #include "PlanningTarget.h"
+#include "Obstacle.h"
 
 namespace dust{
 namespace lattice_ns{

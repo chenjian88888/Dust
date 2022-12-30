@@ -20,6 +20,10 @@ set(SRC_FILE
 
     src/lattice/lattice.cc
 
+    src/obstacle/Obstacle.cc
+    src/obstacle/Obstacle_avoid.cc
+    src/obstacle/Ob_prediction_trajectory.cc
+
     src/path/path_matcher.cc
     src/path/path_points.cc
     src/path/trajectoryPoint.cc
@@ -67,6 +71,7 @@ include_directories(
     include
     include/common
     include/lattice
+    include/obstacle
     include/msg_gen
     include/path
     include/planning.h
