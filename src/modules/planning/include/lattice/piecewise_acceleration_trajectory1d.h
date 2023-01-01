@@ -1,6 +1,7 @@
 #ifndef ACCELERATIONTRAJECTORY1D_H
 #define ACCELERATIONTRAJECTORY1D_H
-#include "path_init.h"
+#include "plan_init.h"
+#include "curve1d.h"
 #include <vector>
 #include <cmath>
 #include <queue>

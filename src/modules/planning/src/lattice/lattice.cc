@@ -3,6 +3,32 @@ std::vector<Obstacle> AllObstacle;                        //感知一帧识别�
 namespace dust{
 namespace lattice_ns{
 
+std::vector<PathPoint> ToDiscretizedReferenceLine(
+      const std::vector<ReferencePoint> &ref_points)
+  {
+    double s = 0.0;
+    std::vector<PathPoint> path_points;
+    for (const auto &ref_point : ref_points)
+    {
+      PathPoint path_point;
+      path_point.set_x(ref_point.x_);
+      path_point.set_y(ref_point.y_);
+      path_point.set_theta(ref_point.heading());
+      path_point.set_kappa(ref_point.kappa());
+      path_point.set_dkappa(ref_point.dkappa());
+
+      if (!path_points.empty())
+      {
+        double dx = path_point.x - path_points.back().x;
+        double dy = path_point.y - path_points.back().y;
+        s += std::sqrt(dx * dx + dy * dy);
+      }
+      path_point.set_s(s);
+      path_points.push_back(std::move(path_point));
+    }
+    return path_points;
+}
+
 lattice::lattice(){
     // ros parameter settings
     ros::param::get("use_lateral_optimization", this->FLAGS_lateral_optimization);
@@ -105,8 +131,7 @@ void lattice::plan() {
       obstacles.emplace_back(&AllObstacle[i]);
     }
     
-    ros::WallTime current_time_ros = ros::WallTime::now();
-    double current_time = current_time_ros.toSec();
+    double current_time = (double)(ros::WallTime::now().toSec());
     plan_start_point(current_time);
     // 创建起点参数
     TrajectoryPoint planning_init_point(lattice_ic_);
@@ -115,7 +140,7 @@ void lattice::plan() {
     PlanningTarget planning_target(10, accumulated_s); // 目标
     lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
     best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
-                                     FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
+                                     FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, absolute_time);
 }
 
 void lattice::plan_start_point(double &current_time) {
@@ -137,8 +162,11 @@ void lattice::plan_start_point(double &current_time) {
         d0 = 0;
         dds0 = 0;
         ddd0 = 0;
-        init_relative_time = current_time + 0.1;
-    } else{
+        init_relative_time = 0.0;
+        absolute_time = current_time;
+    }
+    else
+    {
         // 非第一次运行
         std::cout << "第2次运行" << std::endl;
         double x_cur = gps_.posX;// 定位
@@ -152,7 +180,7 @@ void lattice::plan_start_point(double &current_time) {
         double dt = 0.1;
         int index = 0;
         for (int i = 0; i < best_path_.size()- 1;++i){
-            if ( best_path_[i].relative_time <= current_time &&  best_path_[i + 1].relative_time > current_time){
+            if ( best_path_[i].absolute_time <= current_time &&  best_path_[i + 1].absolute_time > current_time){
                 index = i;
                 break;
             }
@@ -189,13 +217,13 @@ void lattice::plan_start_point(double &current_time) {
             dds0 = 0;
             ddd0 = 0;
             
-            init_relative_time = current_time + 0.1;
+            absolute_time = current_time + 0.1;
         }
         else {
           ROS_INFO("good control");
           int index_good = 0;
           for (int i = 0; i < best_path_.size() - 1; ++i){
-            if (best_path_[i].relative_time <= current_time+0.1 && best_path_[i + 1].relative_time > current_time+0.1)
+            if (best_path_[i].absolute_time <= current_time+0.1 && best_path_[i + 1].absolute_time > current_time+0.1)
             {
               index_good = i;
               break;
@@ -223,7 +251,7 @@ void lattice::plan_start_point(double &current_time) {
           d0 = 0;
           dds0 = 0;
           ddd0 = 0;
-          init_relative_time = best_path_[index_good].relative_time;
+          absolute_time = best_path_[index_good].absolute_time;
         }
     }
 }
@@ -234,7 +262,7 @@ DiscretizedTrajectory lattice::LatticePlan(
     const std::vector<const Obstacle *> &obstacles,
     const std::vector<double> &accumulated_s,
     const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
-    const double &init_relative_time, const double lon_decision_horizon)
+    const double &init_relative_time, const double lon_decision_horizon, const double &absolute_time)
 {
   //ROS_WARN("start_lattice");
   DiscretizedTrajectory Optim_trajectory;
@@ -275,8 +303,8 @@ DiscretizedTrajectory lattice::LatticePlan(
     double trajectory_pair_cost = trajectory_evaluator.top_trajectory_pair_cost();
     auto trajectory_pair = trajectory_evaluator.next_top_trajectory_pair();
     // combine two 1d trajectories to one 2d trajectory
-    auto combined_trajectory = trajectorycombiner.Combine(accumulated_s, *trajectory_pair.first, *trajectory_pair.second,
-                                                          reference_points, init_relative_time);
+    auto combined_trajectory = trajectorycombiner_.Combine(accumulated_s, *trajectory_pair.first, *trajectory_pair.second,
+                                                          reference_points, init_relative_time, absolute_time);
 
     // 采样时候才调用，二次规划不用
     if (lateral_optimization == false)
@@ -334,32 +362,6 @@ void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const 
       cartesian_state.path_point().theta,
       cartesian_state.path_point().kappa, ptr_s, ptr_d);
 }
-
-std::vector<PathPoint> ToDiscretizedReferenceLine(
-      const std::vector<ReferencePoint> &ref_points)
-  {
-    double s = 0.0;
-    std::vector<PathPoint> path_points;
-    for (const auto &ref_point : ref_points)
-    {
-      PathPoint path_point;
-      path_point.set_x(ref_point.x_);
-      path_point.set_y(ref_point.y_);
-      path_point.set_theta(ref_point.heading());
-      path_point.set_kappa(ref_point.kappa());
-      path_point.set_dkappa(ref_point.dkappa());
-
-      if (!path_points.empty())
-      {
-        double dx = path_point.x - path_points.back().x;
-        double dy = path_point.y - path_points.back().y;
-        s += std::sqrt(dx * dx + dy * dy);
-      }
-      path_point.set_s(s);
-      path_points.push_back(std::move(path_point));
-    }
-    return path_points;
-  }
 
 } // namespace lattice
 } // namespace dust

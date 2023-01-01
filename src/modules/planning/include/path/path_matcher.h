@@ -1,16 +1,9 @@
 #pragma once
 #include <iostream>
 #include <vector>
-// #include "CubicSpline2D.h"
 #include "vec2d.h"
 #include "reference_point.h"
-// #include "path_points.h"
-// #include "FrenetPath.h"
-// #include "auxiliary_function.h"
-// #include "angle.h"
-// #include "box2d.h"
-
-// #include "cartesian_frenet_conversion.h"
+#include "path_points.h"
 
 //参考线
 class PathMatcher
@@ -18,13 +11,13 @@ class PathMatcher
 public:
   PathMatcher() = default;
   ~PathMatcher() = default;
-  // static ReferencePoint MatchToPath(const double s, const std::vector<ReferencePoint> &reference_points);
+  static ReferencePoint MatchToPath(const double s, const std::vector<ReferencePoint> &reference_points);
 
   static ReferencePoint MatchToPath(const std::vector<ReferencePoint> &reference_points,
                                     const double x, const double y);
 
-  // static PathPoint MatchToPath(const std::vector<PathPoint> &reference_line,
-  //                              const double s);
+  static PathPoint MatchToPath(const std::vector<PathPoint> &reference_line,
+                               const double s);
 
   static std::pair<double, double> GetPathFrenetCoordinate(const std::vector<ReferencePoint> &reference_points, const double x,
                                                            const double y);
@@ -41,9 +34,9 @@ public:
   static ReferencePoint InterpolateUsingLinearApproximation(const ReferencePoint &p0, const ReferencePoint &p1,
                                                             const double s);
                                                             
-  // static PathPoint InterpolateUsingLinearApproximation(const PathPoint &p0,
-  //                                                      const PathPoint &p1,
-  //                                                      const double s);
+  static PathPoint InterpolateUsingLinearApproximation(const PathPoint &p0,
+                                                       const PathPoint &p1,
+                                                       const double s);
 
 private:
   const double kDuplicatedPointsEpsilon = 1e-7;

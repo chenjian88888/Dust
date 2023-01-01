@@ -216,7 +216,7 @@ void Obstacle_avoid::Publish(std::pair<std::vector<double>, std::vector<double>>
 }
 
 //产生pre_timepre_time秒的预测
-Prediction::Ob_Trajectory Obstacle_avoid::Generater_Trajectory(geometry_msgs::Pose ob_pos, double pre_time, double obstacle_threa, double obstacle_velocity)
+Prediction::Ob_Trajectory Obstacle_avoid::Generater_Trajectory(geometry_msgs::Pose ob_pos, double pre_time, double obstacle_theta, double obstacle_velocity)
 {
   Prediction::Ob_Trajectory result;
   std::vector<TrajectoryPoint> Trajectories;
@@ -226,8 +226,8 @@ Prediction::Ob_Trajectory Obstacle_avoid::Generater_Trajectory(geometry_msgs::Po
   ob_points(0, 1) = ob_pos.position.y;
   ob_points(0, 2) = 0;
 
-  ob_points(1, 0) = ob_pos.position.x + pre_time * cos(obstacle_threa);
-  ob_points(1, 1) = ob_pos.position.y + pre_time * sin(obstacle_threa);
+  ob_points(1, 0) = ob_pos.position.x + pre_time * cos(obstacle_theta);
+  ob_points(1, 1) = ob_pos.position.y + pre_time * sin(obstacle_theta);
   ob_points(1, 2) = 0;
 
   Eigen::MatrixXd path_point_after_interpolation;

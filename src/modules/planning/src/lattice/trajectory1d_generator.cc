@@ -63,7 +63,7 @@ void Trajectory1dGenerator::GenerateLateralTrajectoryBundle(Trajectory1DBundle *
   else //二次规划
   {
     double s_min = init_lon_state_[0]; //自主车的初始纵向距离
-    double s_min = 0.0; //自主车的初始纵向距离
+    // double s_min = 0.0; //自主车的初始纵向距离
     double s_max = s_min + Config_.FLAGS_max_s_lateral_optimization;
 
     double delta_s = Config_.FLAGS_default_delta_s_lateral_optimization;

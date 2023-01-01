@@ -3,7 +3,7 @@
 */
 #pragma once
 #include "piecewise_jerk_trajectory1d.h"
-#include "path_init.h"
+#include "plan_init.h"
 #include "path_points.h"
 
 class LateralQPOptimizer {

@@ -110,6 +110,7 @@ include_directories(
     include/qp
     include/planning.h
     include/reference_line
+    include/spline
     include ${catkin_INCLUDE_DIRS}
 )
 

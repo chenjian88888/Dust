@@ -99,7 +99,7 @@ public:
   //障碍物的速度
   double obstacle_velocity;
   //障碍物朝向
-  double obstacle_threa;
+  double obstacle_theta;
   //中心坐标
   geometry_msgs::Pose centerpoint;
   //障碍物的长宽
@@ -256,7 +256,7 @@ public:
   //障碍物的速度
   double obstacle_velocity;
   //障碍物朝向
-  double obstacle_threa;
+  double obstacle_theta;
   //中心坐标
   geometry_msgs::Pose centerpoint;
   //障碍物的长宽

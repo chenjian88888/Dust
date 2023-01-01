@@ -1,7 +1,7 @@
 #ifndef TRAJECTORY_EVALUATOR_H
 #define TRAJECTORY_EVALUATOR_H
 #include "CubicSpline2D.h"
-#include "path_init.h"
+#include "plan_init.h"
 #include "piecewise_braking_trajectory_generator.h"
 #include "PlanningTarget.h"
 #include "curve1d.h"

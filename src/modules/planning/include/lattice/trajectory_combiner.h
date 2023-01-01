@@ -17,6 +17,6 @@ public:
   ~TrajectoryCombiner();
   DiscretizedTrajectory Combine(const std::vector<double> &accumulated_s, const Curve1d &lon_trajectory,
                                 const Curve1d &lat_trajectory, const std::vector<ReferencePoint> &reference_points,
-                                const double &init_relative_time);
+                                const double &init_relative_time, const double &absolute_time);
 };
 #endif

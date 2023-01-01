@@ -274,3 +274,8 @@ void TrajectoryPoint::set_relative_time(double relative_time_)
 {
     relative_time = relative_time_;
 }
+
+void TrajectoryPoint::set_absolute_time(double absolute_time_)
+{
+    absolute_time = absolute_time_;
+}

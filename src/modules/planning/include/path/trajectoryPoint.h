@@ -72,6 +72,7 @@ public:
   double a;      // Tangential acceleration
   // Frenet坐标系下的属性
   double relative_time; // relative_time
+  double absolute_time; // 轨迹的绝对时间
   double d;             // lateral offset
   double d_d;           // lateral speed
   double d_dd;          // lateral acceleration
@@ -98,6 +99,7 @@ public:
   void set_v(double v_);
   void set_a(double a_);
   void set_relative_time(double relative_time_);
+  void set_absolute_time(double absolute_time_);
 
 private:
   bool has_path_point_;

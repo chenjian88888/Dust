@@ -73,6 +73,6 @@ public:
   };
 
   //用此函数模拟动态障碍物的预测轨迹，即：前探距离=当前位置*预测距离，然后线性插值，来得到预测轨迹点
-  Prediction::Ob_Trajectory Generater_Trajectory(geometry_msgs::Pose ob_pos, double pre_time, double obstacle_threa, double obstacle_velocity);
+  Prediction::Ob_Trajectory Generater_Trajectory(geometry_msgs::Pose ob_pos, double pre_time, double obstacle_theta, double obstacle_velocity);
   void average_interpolation(Eigen::MatrixXd &input, Eigen::MatrixXd &output, double pre_time);
 };

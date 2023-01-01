@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include "curve1d.h"
-#include "path_init.h"
+#include "plan_init.h"
 class ConstantJerkTrajectory1d : public Curve1d
 {
 public:

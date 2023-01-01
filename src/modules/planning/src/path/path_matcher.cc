@@ -1,22 +1,22 @@
 #include "path_matcher.h"
 #include "math_utils.h"
 
-// //找匹配点ReferencePoint,这个加了插值InterpolateUsingLinearApproximation，也不是常函数
-// ReferencePoint PathMatcher::MatchToPath(const double s, const std::vector<ReferencePoint> &reference_points)
-// {
-//   auto comp = [](const ReferencePoint &point, const double &s)
-//   { return point.accumulated_s_ < s; };
-//   auto it_lower = std::lower_bound(reference_points.begin(), reference_points.end(), s, comp);
-//   if (it_lower == reference_points.begin())
-//   {
-//     return reference_points.front();
-//   }
-//   else if (it_lower == reference_points.end())
-//   {
-//     return reference_points.back();
-//   }
-//   return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
-// }
+//找匹配点ReferencePoint,这个加了插值InterpolateUsingLinearApproximation，也不是常函数
+ReferencePoint PathMatcher::MatchToPath(const double s, const std::vector<ReferencePoint> &reference_points)
+{
+  auto comp = [](const ReferencePoint &point, const double &s)
+  { return point.accumulated_s_ < s; };
+  auto it_lower = std::lower_bound(reference_points.begin(), reference_points.end(), s, comp);
+  if (it_lower == reference_points.begin())
+  {
+    return reference_points.front();
+  }
+  else if (it_lower == reference_points.end())
+  {
+    return reference_points.back();
+  }
+  return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
+}
 
 ReferencePoint PathMatcher::MatchToPath(const std::vector<ReferencePoint> &reference_points,
                                         const double x, const double y)
@@ -57,29 +57,29 @@ ReferencePoint PathMatcher::MatchToPath(const std::vector<ReferencePoint> &refer
                              reference_points[index_end], x, y);
 }
 
-// PathPoint PathMatcher::MatchToPath(const std::vector<PathPoint> &reference_line,
-//                                    const double s)
-// {
-//   auto comp = [](const PathPoint &point, const double s)
-//   {
-//     return point.s < s;
-//   };
+PathPoint PathMatcher::MatchToPath(const std::vector<PathPoint> &reference_line,
+                                   const double s)
+{
+  auto comp = [](const PathPoint &point, const double s)
+  {
+    return point.s < s;
+  };
 
-//   auto it_lower =
-//       std::lower_bound(reference_line.begin(), reference_line.end(), s, comp);
-//   if (it_lower == reference_line.begin())
-//   {
-//     return reference_line.front();
-//   }
-//   else if (it_lower == reference_line.end())
-//   {
-//     return reference_line.back();
-//   }
+  auto it_lower =
+      std::lower_bound(reference_line.begin(), reference_line.end(), s, comp);
+  if (it_lower == reference_line.begin())
+  {
+    return reference_line.front();
+  }
+  else if (it_lower == reference_line.end())
+  {
+    return reference_line.back();
+  }
 
-//   // interpolate between it_lower - 1 and it_lower
-//   // return interpolate(*(it_lower - 1), *it_lower, s);
-//   return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
-// }
+  // interpolate between it_lower - 1 and it_lower
+  // return interpolate(*(it_lower - 1), *it_lower, s);
+  return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
+}
 
 std::pair<double, double> PathMatcher::GetPathFrenetCoordinate(
     const std::vector<ReferencePoint> &reference_points, const double x,
@@ -137,28 +137,28 @@ ReferencePoint PathMatcher::InterpolateUsingLinearApproximation(const ReferenceP
   return path_point;
 }
 
-// PathPoint PathMatcher::InterpolateUsingLinearApproximation(const PathPoint &p0,
-//                                                            const PathPoint &p1,
-//                                                            const double s)
-// {
-//   double s0 = p0.s;
-//   double s1 = p1.s;
+PathPoint PathMatcher::InterpolateUsingLinearApproximation(const PathPoint &p0,
+                                                           const PathPoint &p1,
+                                                           const double s)
+{
+  double s0 = p0.s;
+  double s1 = p1.s;
 
-//   PathPoint path_point;
-//   double weight = (s - s0) / (s1 - s0);
-//   double x = (1 - weight) * p0.x + weight * p1.x;
-//   double y = (1 - weight) * p0.y + weight * p1.y;
-//   double theta = common::math::slerp(p0.theta, p0.s, p1.theta, p1.s, s);
-//   double kappa = (1 - weight) * p0.kappa + weight * p1.kappa;
-//   double dkappa = (1 - weight) * p0.dkappa + weight * p1.dkappa;
-//   path_point.set_x(x);
-//   path_point.set_y(y);
-//   path_point.set_theta(theta);
-//   path_point.set_kappa(kappa);
-//   path_point.set_dkappa(dkappa);
-//   path_point.set_s(s);
-//   return path_point;
-// }
+  PathPoint path_point;
+  double weight = (s - s0) / (s1 - s0);
+  double x = (1 - weight) * p0.x + weight * p1.x;
+  double y = (1 - weight) * p0.y + weight * p1.y;
+  double theta = common::math::slerp(p0.theta, p0.s, p1.theta, p1.s, s);
+  double kappa = (1 - weight) * p0.kappa + weight * p1.kappa;
+  double dkappa = (1 - weight) * p0.dkappa + weight * p1.dkappa;
+  path_point.set_x(x);
+  path_point.set_y(y);
+  path_point.set_theta(theta);
+  path_point.set_kappa(kappa);
+  path_point.set_dkappa(dkappa);
+  path_point.set_s(s);
+  return path_point;
+}
 
 //计算参考路径点的 headings accumulated_s kappas dkappas
 bool PathMatcher::ComputePathProfile(const std::vector<std::pair<double, double>> &xy_points,

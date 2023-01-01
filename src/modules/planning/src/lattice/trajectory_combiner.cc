@@ -9,7 +9,7 @@ TrajectoryCombiner::~TrajectoryCombiner()
 DiscretizedTrajectory TrajectoryCombiner::Combine(const std::vector<double> &accumulated_s,
                                                   const Curve1d &lon_trajectory, const Curve1d &lat_trajectory,
                                                   const std::vector<ReferencePoint> &reference_points,
-                                                  const double &init_relative_time)
+                                                  const double &init_relative_time, const double &absolute_time)
 {
   DiscretizedTrajectory combined_trajectory;
 
@@ -81,6 +81,7 @@ DiscretizedTrajectory TrajectoryCombiner::Combine(const std::vector<double> &acc
 
     //赋值frenet坐标系下的
     trajectory_point.set_relative_time(t_param + init_relative_time);
+    trajectory_point.set_absolute_time(absolute_time + t_param + init_relative_time);
     // trajectory_point.set_s(accumulated_trajectory_s); //保持轨迹的第一个点为s=0
     trajectory_point.set_s(s); //不保持轨迹s
     trajectory_point.s_d = s_dot;

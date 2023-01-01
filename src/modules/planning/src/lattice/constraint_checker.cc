@@ -17,6 +17,7 @@ ConstraintChecker::Result ConstraintChecker::ValidTrajectory(const DiscretizedTr
     double t = p.relative_time;
     if (t > kMaxCheckRelativeTime)
     {
+      ROS_INFO("relative time is bigger than 8s");
       break;
     }
     double lon_v = p.v;

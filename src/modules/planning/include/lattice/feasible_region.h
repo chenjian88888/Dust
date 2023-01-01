@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "path_init.h"
+#include "plan_init.h"
 class FeasibleRegion
 {
 public:

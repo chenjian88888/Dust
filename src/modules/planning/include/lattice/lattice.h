@@ -60,8 +60,10 @@ public:
      */
     void plan();
     /**
-     * @brief 计算规划起点
-     * 
+     * @brief 计算规划起点:第一次运行，规划起点就是定位点，轨迹的absolute_time=current_time；之后每次运行先判断控制是否跟上
+     * 控制跟上：规划起点是轨迹绝对时间上往后0.1s的轨迹点，absolute_time是在上一帧轨迹中找到距current_time+0.1最接近的轨迹点的索引
+     * 控制没跟上：规划起点根据车辆动力学合理外推，absolute_time=current_time+0.1;
+     *
      */
     void plan_start_point(double &tt);
     /**
@@ -83,7 +85,7 @@ public:
       const std::vector<const Obstacle *> &obstacles,
       const std::vector<double> &accumulated_s,
       const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
-      const double &init_relative_time, const double lon_decision_horizon);
+      const double &init_relative_time, const double lon_decision_horizon, const double &absolute_time);
     
     /**
      * @brief 规划起点frenet和cartesian坐标转换
@@ -118,6 +120,7 @@ private:
     double ds0;                  //初始的纵向速度[m/s]
     double dds0;                 //初始的纵向加速度[m/ss]
     double init_relative_time;   //规划起始点的时间
+    double absolute_time;        //轨迹上的绝对时间
     double x_init;
     double y_init;
     double z_init;
@@ -135,6 +138,8 @@ private:
 
     // class
     DiscretizedTrajectory best_path_; //最佳路径
+    TrajectoryCombiner trajectorycombiner_;
+    ConstraintChecker constraintchecker_;
 
     // flag
     bool is_first_run = true;

@@ -10,11 +10,11 @@ PathTimeGraph::PathTimeGraph(const std::vector<const Obstacle *> &obstacles, con
 {
   if (s_start <= s_end)
   {
-    ROS_EROOR("s_end is before s_start");
+    ROS_ERROR("s_end is before s_start");
   }
   if (t_start <= t_end)
   {
-    ROS_EROOR("t_end is before t_start");
+    ROS_ERROR("t_end is before t_start");
   }
   path_range_.first = s_start;
   path_range_.second = s_end;
@@ -195,7 +195,7 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   sl_boundary.obstacle_id = obstacle->obstacle_id;
   sl_boundary.timestamp_ = obstacle->timestamp_;
   sl_boundary.obstacle_velocity = obstacle->obstacle_velocity;
-  sl_boundary.obstacle_threa = obstacle->obstacle_threa;
+  sl_boundary.obstacle_theta = obstacle->obstacle_theta;
   sl_boundary.centerpoint = obstacle->centerpoint;
   sl_boundary.obstacle_length = obstacle->obstacle_length;
   sl_boundary.obstacle_width = obstacle->obstacle_width;
@@ -212,7 +212,7 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   path_time_obstacle_map_[obstacle_id].obstacle_id = obstacle_id;
   path_time_obstacle_map_[obstacle_id].timestamp_ = obstacle->timestamp_;// 时间戳怎么赋值
   path_time_obstacle_map_[obstacle_id].obstacle_velocity = obstacle->obstacle_velocity;
-  path_time_obstacle_map_[obstacle_id].obstacle_threa = obstacle->obstacle_threa;
+  path_time_obstacle_map_[obstacle_id].obstacle_theta = obstacle->obstacle_theta;
   path_time_obstacle_map_[obstacle_id].centerpoint = obstacle->centerpoint;
   path_time_obstacle_map_[obstacle_id].obstacle_length = obstacle->obstacle_length;
   path_time_obstacle_map_[obstacle_id].obstacle_width = obstacle->obstacle_width;
@@ -313,7 +313,7 @@ void PathTimeGraph::SetDynamicObstacle(const Obstacle *obstacle,
     // ST障碍物基本信息
     path_time_obstacle_map_[obstacle->obstacle_id].timestamp_ = obstacle->timestamp_;
     path_time_obstacle_map_[obstacle->obstacle_id].obstacle_velocity = obstacle->obstacle_velocity;
-    path_time_obstacle_map_[obstacle->obstacle_id].obstacle_threa = obstacle->obstacle_threa;
+    path_time_obstacle_map_[obstacle->obstacle_id].obstacle_theta = obstacle->obstacle_theta;
     path_time_obstacle_map_[obstacle->obstacle_id].centerpoint = obstacle->centerpoint;
     path_time_obstacle_map_[obstacle->obstacle_id].obstacle_length = obstacle->obstacle_length;
     path_time_obstacle_map_[obstacle->obstacle_id].obstacle_width = obstacle->obstacle_width;
