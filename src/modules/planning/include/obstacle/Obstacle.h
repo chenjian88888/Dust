@@ -72,7 +72,7 @@ private:
   std::vector<std::pair<double, double>> pinnacles;
 
   // handle
-  ros::NodeHandle n_;
+  ros::NodeHandle nObstacle_;
   // Publisher和Subscriber
   ros::Subscriber obstacle_sub_;
   ros::Publisher Obstacle_Prediction;

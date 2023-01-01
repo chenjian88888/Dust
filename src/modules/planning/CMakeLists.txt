@@ -23,16 +23,41 @@ set(SRC_FILE
     src/common/polygon2d.cc
     src/common/vec2d.cc
 
+    src/lattice/collision_checker.cc
+    src/lattice/constraint_checker.cc
+    src/lattice/end_condition_sampler.cc
+    src/lattice/feasible_region.cc
+    src/lattice/lattice_trajectory1d.cc
     src/lattice/lattice.cc
+    src/lattice/path_time_graph.cc
+    src/lattice/piecewise_braking_trajectory_generator.cc
+    src/lattice/piecewise_acceleration_trajectory1d.cc
+    src/lattice/prediction_querier.cc
+    src/lattice/trajectory_combiner.cc
+    src/lattice/trajectory_evaluator.cc
+    src/lattice/trajectory1d_generator.cc
 
     src/obstacle/boundarys.cc
     src/obstacle/Ob_prediction_trajectory.cc
     src/obstacle/Obstacle_avoid.cc
     src/obstacle/Obstacle.cc
 
+    src/path/FrenetPath.cc
     src/path/path_matcher.cc
     src/path/path_points.cc
     src/path/trajectoryPoint.cc
+
+    src/polynomial/quintic_polynomial_curve1d.cc
+    src/polynomial/quartic_polynomial_curve1d.cc
+
+    src/qp/constant_jerk_trajectory1d.cc
+    src/qp/lateral_osqp_optimizer.cc
+    src/qp/lateral_qp_optimizer.cc
+    src/qp/piecewise_jerk_trajectory1d.cc
+
+    src/spline/CubicSpline1D.cc
+    src/spline/CubicSpline2D.cc
+    
     
 
 )
@@ -81,6 +106,8 @@ include_directories(
     include/obstacle
     include/msg_gen
     include/path
+    include/polynomial
+    include/qp
     include/planning.h
     include/reference_line
     include ${catkin_INCLUDE_DIRS}

@@ -81,22 +81,22 @@ ReferencePoint PathMatcher::MatchToPath(const std::vector<ReferencePoint> &refer
 //   return InterpolateUsingLinearApproximation(*(it_lower - 1), *it_lower, s);
 // }
 
-// std::pair<double, double> PathMatcher::GetPathFrenetCoordinate(
-//     const std::vector<ReferencePoint> &reference_points, const double x,
-//     const double y)
-// {
-//   auto matched_path_point = MatchToPath(reference_points, x, y);
-//   double rtheta = matched_path_point.heading_;
-//   double rx = matched_path_point.x_;
-//   double ry = matched_path_point.y_;
-//   double delta_x = x - rx;
-//   double delta_y = y - ry;
-//   double side = std::cos(rtheta) * delta_y - std::sin(rtheta) * delta_x;
-//   std::pair<double, double> relative_coordinate;
-//   relative_coordinate.first = matched_path_point.accumulated_s_;
-//   relative_coordinate.second = std::copysign(std::hypot(delta_x, delta_y), side);
-//   return relative_coordinate;
-// }
+std::pair<double, double> PathMatcher::GetPathFrenetCoordinate(
+    const std::vector<ReferencePoint> &reference_points, const double x,
+    const double y)
+{
+  auto matched_path_point = MatchToPath(reference_points, x, y);
+  double rtheta = matched_path_point.heading_;
+  double rx = matched_path_point.x_;
+  double ry = matched_path_point.y_;
+  double delta_x = x - rx;
+  double delta_y = y - ry;
+  double side = std::cos(rtheta) * delta_y - std::sin(rtheta) * delta_x;
+  std::pair<double, double> relative_coordinate;
+  relative_coordinate.first = matched_path_point.accumulated_s_;
+  relative_coordinate.second = std::copysign(std::hypot(delta_x, delta_y), side);
+  return relative_coordinate;
+}
 
 ReferencePoint PathMatcher::FindProjectionPoint(const ReferencePoint &p0,
                                                 const ReferencePoint &p1, const double x,

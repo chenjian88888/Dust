@@ -26,8 +26,8 @@ public:
   // static PathPoint MatchToPath(const std::vector<PathPoint> &reference_line,
   //                              const double s);
 
-  // static std::pair<double, double> GetPathFrenetCoordinate(const std::vector<ReferencePoint> &reference_points, const double x,
-  //                                                          const double y);
+  static std::pair<double, double> GetPathFrenetCoordinate(const std::vector<ReferencePoint> &reference_points, const double x,
+                                                           const double y);
 
   static ReferencePoint FindProjectionPoint(const ReferencePoint &p0,
                                             const ReferencePoint &p1, const double x,

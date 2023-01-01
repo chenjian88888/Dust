@@ -27,6 +27,11 @@
 #include "PlanningTarget.h"
 #include "Obstacle.h"
 #include "cartesian_frenet_conversion.h"
+#include "trajectory1d_generator.h"
+#include "trajectory_evaluator.h"
+#include "trajectory_combiner.h"
+#include "constraint_checker.h"
+#include "collision_checker.h"
 
 namespace dust{
 namespace lattice_ns{
@@ -109,7 +114,7 @@ private:
     double d0;                   //初始的横向偏移值 [m]
     double dd0;                  //初始的横向速度 [m/s]
     double ddd0;                 //初始的横向加速度 [m/s^2]
-    double init_lon_state;       //初始的纵向值[m]
+    double s0;                   //初始的纵向值[m]
     double ds0;                  //初始的纵向速度[m/s]
     double dds0;                 //初始的纵向加速度[m/ss]
     double init_relative_time;   //规划起始点的时间
@@ -126,6 +131,7 @@ private:
     std::pair<std::vector<double>, std::vector<double>> reference_path; //参考路径点位置（x,y）
     std::vector<double> accumulated_s;                                  // 纵向距离
     double lon_decision_horizon = 0;// 前视距离
+    InitialConditions lattice_ic_;
 
     // class
     DiscretizedTrajectory best_path_; //最佳路径

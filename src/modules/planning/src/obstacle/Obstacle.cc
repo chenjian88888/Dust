@@ -14,13 +14,13 @@ PPoint ob_right_buttom;
 std::pair<double, double> ego_pos; //自主车的实时位置
 double ego_head;                   //自主车的朝向
 
-Obstacle::Obstacle(bool public_obstacle)
+Obstacle::Obstacle(bool sub_obstacle)
 {
   
   //订阅感知的障碍物
-  if (public_obstacle == true)
+  if (sub_obstacle == true)
   {
-    obstacle_sub_ = n_.subscribe<msg_gen::obstacle>("/ground_truth", 10, &Obstacle::setObstacles, this);
+    obstacle_sub_ = nObstacle_.subscribe("/ground_truth", 10, &Obstacle::setObstacles, this);
   }
 }
 
@@ -58,7 +58,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
       obs.obstacle_velocity = msgs->obstacle[i].velX;
       if (obs.obstacle_velocity > 0.2) //动态障碍物
       {
-        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 4, obs.obstacle_theta, obs.obstacle_velocity);
+        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 5, obs.obstacle_theta, obs.obstacle_velocity);
         obs.SetTrajectory(ob_tray);
       }
 

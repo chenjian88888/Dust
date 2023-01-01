@@ -12,7 +12,32 @@ lattice::lattice(){
 
     gps_sub_ = n_.subscribe("/gps", 10, &lattice::gpsCallback, this);
 
+    // 订阅障碍物
+    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
+
     // publisher
+
+    //初始参数的输入
+    lattice_ic_ = {
+        d0,   // 初始的横向偏移值 [m]
+        dd0,  // 初始的横向速度 [m/s]
+        ddd0, // 初始的横向加速度 [m/s^2]
+
+        s0,                 // 初始的纵向值[m]
+        ds0,                // 初始的纵向速度[m/s]
+        dds0,               // 初始的纵向加速度[m/ss]
+        init_relative_time, // 规划起始点的时间
+
+        x_init, // 用来寻找匹配点
+        y_init,
+        z_init,
+        v_init,
+        a_init,
+
+        theta_init,
+        kappa_init,
+        dkappa_init,
+    };
     
 }
 
@@ -75,45 +100,22 @@ void lattice::gpsCallback(const msg_gen::gps &pGps){
 void lattice::plan() {
     ROS_INFO("lattice plan start");
 
-    
-    // 订阅障碍物
-    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
     std::vector<const Obstacle *> obstacles; // Apollo是这种类型
     for (size_t i = 0; i < AllObstacle.size(); i++){
       obstacles.emplace_back(&AllObstacle[i]);
     }
-    //初始参数的输入
-    InitialConditions lattice_ic = {
-        d0,   // 初始的横向偏移值 [m]
-        dd0,  // 初始的横向速度 [m/s]
-        ddd0, // 初始的横向加速度 [m/s^2]
-
-        init_lon_state,     // 初始的纵向值[m]
-        ds0,                // 初始的纵向速度[m/s]
-        dds0,               // 初始的纵向加速度[m/ss]
-        init_relative_time, // 规划起始点的时间
-
-        x_init, // 用来寻找匹配点
-        y_init,
-        z_init,
-        v_init,
-        a_init,
-
-        theta_init,
-        kappa_init,
-        dkappa_init,
-    };
+    
     ros::WallTime current_time_ros = ros::WallTime::now();
     double current_time = current_time_ros.toSec();
     plan_start_point(current_time);
     // 创建起点参数
-    TrajectoryPoint planning_init_point(lattice_ic);
+    TrajectoryPoint planning_init_point(lattice_ic_);
     // 轨迹生成
     // PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
     PlanningTarget planning_target(10, accumulated_s); // 目标
     lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
-    // best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
-    //                                  FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
+    best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
+                                     FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon);
 }
 
 void lattice::plan_start_point(double &current_time) {
@@ -124,14 +126,17 @@ void lattice::plan_start_point(double &current_time) {
         x_init = gps_.posX;// 定位
         y_init = gps_.posY;
         z_init = 0;
-        ds0 = 0;
-        dd0 = 0;
+        v_init = gps_.velX;
+        a_init = gps_.accelX;
         theta_init = gps_.oriZ;
-        dds0 = 0;
-        ddd0 = 0;
         kappa_init = 0;
         dkappa_init = 0;
-
+        s0 = 0;
+        ds0 = 0;
+        dd0 = 0;
+        d0 = 0;
+        dds0 = 0;
+        ddd0 = 0;
         init_relative_time = current_time + 0.1;
     } else{
         // 非第一次运行
@@ -146,14 +151,12 @@ void lattice::plan_start_point(double &current_time) {
         double ay_cur = gps_.accelY;
         double dt = 0.1;
         int index = 0;
-        ROS_INFO("11111");
         for (int i = 0; i < best_path_.size()- 1;++i){
             if ( best_path_[i].relative_time <= current_time &&  best_path_[i + 1].relative_time > current_time){
                 index = i;
                 break;
             }
         }
-        ROS_INFO("2222");
         // 上一周期规划的本周期车辆应该在的位置
         double pre_x_desire = best_path_[index].x;
         double pre_y_desire = best_path_[index].y;
@@ -174,13 +177,18 @@ void lattice::plan_start_point(double &current_time) {
             x_init = x_cur + vx_cur * dt + 0.5 * ax_cur * dt * dt;
             y_init = y_cur + vy_cur * dt + 0.5 * ay_cur * dt * dt;
             z_init = 0;
-            ds0 = vx_cur + ax_cur * dt;
-            dd0 = vy_cur + ay_cur * dt;
-            theta_init = atan2(dd0, ds0);
-            dds0 = ax_cur;
-            ddd0 = ay_cur;
+            v_init = vx_cur + ax_cur * dt;
+            a_init = ax_cur;
+            theta_init = atan2(vy_cur + ay_cur * dt, vx_cur + ax_cur * dt);
             kappa_init = kappa_cur;
             dkappa_init = 0;
+            s0 = 0;
+            ds0 = 0;
+            dd0 = 0;
+            d0 = 0;
+            dds0 = 0;
+            ddd0 = 0;
+            
             init_relative_time = current_time + 0.1;
         }
         else {
@@ -196,19 +204,25 @@ void lattice::plan_start_point(double &current_time) {
           x_init = best_path_[index_good].x;
           y_init = best_path_[index_good].y;
           z_init = 0;
+          v_init = best_path_[index_good].v;
+          a_init = best_path_[index_good].a;
           theta_init = best_path_[index_good].theta;
           kappa_init = best_path_[index_good].kappa;
           dkappa_init = best_path_[index_good].dkappa;
           // 上一帧轨迹的速度和加速度是指轨迹的切向速度，切向加速度
-          ds0 = best_path_[index_good].v * cos(theta_init);
-          dd0 = best_path_[index_good].v * sin(theta_init);
-          // 计算轨迹在current_time + 100ms这个店的切向法向量
-          tor << cos(theta_init), sin(theta_init);
-          nor << -sin(theta_init), cos(theta_init);
-          Eigen::Matrix<double, 2, 1> a_tor = best_path_[index_good].a * tor;
-          Eigen::Matrix<double, 2, 1> a_nor = best_path_[index_good].v * best_path_[index_good].v * kappa_init * nor;
-          dds0 = a_tor[0] + a_nor[0];
-          ddd0 = a_tor[1] + a_nor[1];
+          // 计算轨迹在current_time + 100ms这个点的切向法向量
+          // tor << cos(theta_init), sin(theta_init);
+          // nor << -sin(theta_init), cos(theta_init);
+          // Eigen::Matrix<double, 2, 1> a_tor = best_path_[index_good].a * tor;
+          // Eigen::Matrix<double, 2, 1> a_nor = best_path_[index_good].v * best_path_[index_good].v * kappa_init * nor;
+          // dds0 = a_tor[0] + a_nor[0];
+          // ddd0 = a_tor[1] + a_nor[1];
+          s0 = 0;
+          ds0 = 0;
+          dd0 = 0;
+          d0 = 0;
+          dds0 = 0;
+          ddd0 = 0;
           init_relative_time = best_path_[index_good].relative_time;
         }
     }
@@ -234,79 +248,79 @@ DiscretizedTrajectory lattice::LatticePlan(
   ComputeInitFrenetState(matched_point, planning_init_point, &init_s, &init_d);
 
 
-  //与Apollo不同，我们的前探距离不加上init_s[0]，因为我们的仿真的参考线不长
-  // auto ptr_path_time_graph = std::make_shared<PathTimeGraph>(obstacles, reference_points, init_s[0],
-  //                                                            init_s[0] + 20, //前瞻多少m lon_decision_horizon
-  //                                                            0.0, Config_.FLAGS_trajectory_time_length, init_d);
+  //与Apollo不同，我们的前探距离不加上init_s[0]，因为我们的仿真的参考线不长。设置障碍物，存储SL ST图
+  auto ptr_path_time_graph = std::make_shared<PathTimeGraph>(obstacles, reference_points, init_s[0],
+                                                             init_s[0] + 100, //前瞻多少m lon_decision_horizon
+                                                             0.0, Config_.FLAGS_trajectory_time_length, init_d);
 
-  // auto ptr_reference_line = std::make_shared<std::vector<PathPoint>>(ToDiscretizedReferenceLine(reference_points));
-  // auto ptr_prediction_querier = std::make_shared<PredictionQuerier>(obstacles, ptr_reference_line);
+  auto ptr_reference_line = std::make_shared<std::vector<PathPoint>>(ToDiscretizedReferenceLine(reference_points));
+  auto ptr_prediction_querier = std::make_shared<PredictionQuerier>(obstacles, ptr_reference_line);// 将障碍物按照id 存储为map容器(key, value)
 
-  // // 3.生成纵向和横向轨迹
-  // Trajectory1dGenerator trajectory1d_generator(init_s, init_d, ptr_path_time_graph, ptr_prediction_querier);
-  // std::vector<std::shared_ptr<Curve1d>> lon_trajectory1d_bundle;
-  // std::vector<std::shared_ptr<Curve1d>> lat_trajectory1d_bundle;
-  // trajectory1d_generator.GenerateTrajectoryBundles(planning_target, &lon_trajectory1d_bundle, &lat_trajectory1d_bundle);
+  // 3.生成纵向和横向轨迹
+  Trajectory1dGenerator trajectory1d_generator(init_s, init_d, ptr_path_time_graph, ptr_prediction_querier);
+  std::vector<std::shared_ptr<Curve1d>> lon_trajectory1d_bundle;
+  std::vector<std::shared_ptr<Curve1d>> lat_trajectory1d_bundle;
+  trajectory1d_generator.GenerateTrajectoryBundles(planning_target, &lon_trajectory1d_bundle, &lat_trajectory1d_bundle);
 
-  // //打印轨迹数
-  // // std::cout << "lon_trajectory1d_bundle:" << lon_trajectory1d_bundle.size() << "\n";
-  // // std::cout << "lat_trajectory1d_bundle:" << lat_trajectory1d_bundle.size() << "\n";
+  std::cout << "number_lon_traj = " << lon_trajectory1d_bundle.size();
+  std::cout << "  number_lat_traj = " << lat_trajectory1d_bundle.size() << "\n";
 
-  // // 4.计算每条轨迹的代价,并得出优先级队列
-  // TrajectoryEvaluator trajectory_evaluator(planning_target, lon_trajectory1d_bundle, lat_trajectory1d_bundle,
-  //                                          init_s, ptr_path_time_graph, reference_points);
+  // 4.计算每条轨迹的代价,并得出优先级队列
+  TrajectoryEvaluator trajectory_evaluator(planning_target, lon_trajectory1d_bundle, lat_trajectory1d_bundle,
+                                           init_s, ptr_path_time_graph, reference_points);
 
-  // // 5.轨迹拼接和最后的筛选
-  // while (trajectory_evaluator.has_more_trajectory_pairs())
-  // {
-  //   double trajectory_pair_cost = trajectory_evaluator.top_trajectory_pair_cost();
-  //   auto trajectory_pair = trajectory_evaluator.next_top_trajectory_pair();
-  //   // combine two 1d trajectories to one 2d trajectory
-  //   auto combined_trajectory = trajectorycombiner.Combine(accumulated_s, *trajectory_pair.first, *trajectory_pair.second,
-  //                                                         reference_points, init_relative_time);
+  // 5.轨迹拼接和最后的筛选
+  while (trajectory_evaluator.has_more_trajectory_pairs())
+  {
+    double trajectory_pair_cost = trajectory_evaluator.top_trajectory_pair_cost();
+    auto trajectory_pair = trajectory_evaluator.next_top_trajectory_pair();
+    // combine two 1d trajectories to one 2d trajectory
+    auto combined_trajectory = trajectorycombiner.Combine(accumulated_s, *trajectory_pair.first, *trajectory_pair.second,
+                                                          reference_points, init_relative_time);
 
-  //   // 采样时候才调用，二次规划不用
-  //   if (lateral_optimization == false)
-  //   {
-  //     // check longitudinal and lateral acceleration
-  //     // considering trajectory curvatures
-  //     auto result = constraintchecker_.ValidTrajectory(combined_trajectory);
-  //     if (result != ConstraintChecker::Result::VALID)
-  //     {
-  //       switch (result)
-  //       {
-  //       case ConstraintChecker::Result::LON_VELOCITY_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::LON_ACCELERATION_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::LON_JERK_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::CURVATURE_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::LAT_ACCELERATION_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::LAT_JERK_OUT_OF_BOUND:
-  //         break;
-  //       case ConstraintChecker::Result::VALID:
-  //       default:
-  //         // Intentional empty
-  //         break;
-  //       }
-  //       continue;
-  //     }
-  //     // Get instance of collision checker and constraint checker
-  //     CollisionChecker collision_checker(obstacles, init_s[0], init_d[0], reference_points, ptr_path_time_graph);
-  //     //碰撞检测
-  //     if (collision_checker.InCollision(combined_trajectory))
-  //     {
-  //       continue;
-  //     }
-  //   }
-  //   Optim_trajectory = std::move(combined_trajectory);
-  //   break;
-  // }
-  // //ROS_WARN("trj_num :%d",Optim_trajectory.size());
-  // return Optim_trajectory;
+    // 采样时候才调用，二次规划不用
+    if (lateral_optimization == false)
+    {
+      // check longitudinal and lateral acceleration
+      // considering trajectory curvatures
+      auto result = constraintchecker_.ValidTrajectory(combined_trajectory);
+      if (result != ConstraintChecker::Result::VALID)
+      {
+        switch (result)
+        {
+        case ConstraintChecker::Result::LON_VELOCITY_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::LON_ACCELERATION_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::LON_JERK_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::CURVATURE_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::LAT_ACCELERATION_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::LAT_JERK_OUT_OF_BOUND:
+          break;
+        case ConstraintChecker::Result::VALID:
+        default:
+          // Intentional empty
+          break;
+        }
+        continue;
+      }
+      // Get instance of collision checker and constraint checker
+      CollisionChecker collision_checker(obstacles, init_s[0], init_d[0], reference_points, ptr_path_time_graph);
+      //碰撞检测
+      if (collision_checker.InCollision(combined_trajectory))
+      {
+        continue;
+      }
+    }
+    Optim_trajectory = std::move(combined_trajectory);
+    std::cout << "Total_Trajectory_Cost = " << trajectory_pair_cost << "\n";
+    break;
+  }
+  ROS_WARN("trj_num :%d",Optim_trajectory.size());
+  return Optim_trajectory;
 }
 
 void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
@@ -320,6 +334,32 @@ void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const 
       cartesian_state.path_point().theta,
       cartesian_state.path_point().kappa, ptr_s, ptr_d);
 }
+
+std::vector<PathPoint> ToDiscretizedReferenceLine(
+      const std::vector<ReferencePoint> &ref_points)
+  {
+    double s = 0.0;
+    std::vector<PathPoint> path_points;
+    for (const auto &ref_point : ref_points)
+    {
+      PathPoint path_point;
+      path_point.set_x(ref_point.x_);
+      path_point.set_y(ref_point.y_);
+      path_point.set_theta(ref_point.heading());
+      path_point.set_kappa(ref_point.kappa());
+      path_point.set_dkappa(ref_point.dkappa());
+
+      if (!path_points.empty())
+      {
+        double dx = path_point.x - path_points.back().x;
+        double dy = path_point.y - path_points.back().y;
+        s += std::sqrt(dx * dx + dy * dy);
+      }
+      path_point.set_s(s);
+      path_points.push_back(std::move(path_point));
+    }
+    return path_points;
+  }
 
 } // namespace lattice
 } // namespace dust

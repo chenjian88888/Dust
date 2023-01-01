@@ -56,8 +56,6 @@ void  referenceLine::run() {
         // 确保gps和reference_points收到数据之后再进行
         if (latti.reference_points.size() > 0 && latti.gps_flag_.size() > 0)
         {
-          std::cout << "n = " << n << std::endl;
-        n++;
             latti.plan();
         }
         ros::spinOnce();
