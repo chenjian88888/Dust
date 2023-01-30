@@ -262,7 +262,7 @@ bool referenceLine::CosThetaSmooth(const std::vector<std::pair<double, double>>&
     return false;
   }
 
-  status = app->OptimizeTNLP(problem);
+  status = app->OptimizeTNLP(problem);// 还没写！
 
   if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
   {

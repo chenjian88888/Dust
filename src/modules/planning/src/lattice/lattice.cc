@@ -135,6 +135,8 @@ void lattice::plan() {
     
     double current_time = (double)(ros::WallTime::now().toSec());
     plan_start_point(current_time);
+    std::cout << "x_init: " << x_init << " y_init: " << y_init << std::endl;
+    std::cout << "gps_x:  " << gps_.posX << " gps_y:  " << gps_.posY << std::endl;
     // 创建起点参数
     TrajectoryPoint planning_init_point(lattice_ic_);
     // 轨迹生成
@@ -207,7 +209,7 @@ void lattice::plan_start_point(double &current_time) {
         dds0 = 0;
         ddd0 = 0;
         init_relative_time = 0.0;
-        absolute_time = current_time;
+        absolute_time = current_time + 0.1;
     }
     else if (best_path_.size() > 0)
     {
@@ -229,6 +231,7 @@ void lattice::plan_start_point(double &current_time) {
             std::cout << "best_path_.size1: " << best_path_.size() << std::endl;
             if ( best_path_[i].absolute_time <= current_time &&  best_path_[i + 1].absolute_time > current_time){
                 index = i;
+                std::cout << "match point index: " << i << std::endl;
                 break;
             }
         }
@@ -273,6 +276,7 @@ void lattice::plan_start_point(double &current_time) {
             if (best_path_[i].absolute_time <= current_time+0.1 && best_path_[i + 1].absolute_time > current_time+0.1)
             {
               index_good = i;
+              std::cout << "plan start point index: " << i << std::endl;
               break;
             }
           }
