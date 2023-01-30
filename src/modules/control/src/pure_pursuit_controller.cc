@@ -3,16 +3,16 @@
 std::vector<RefPoint> targetPath_;
 msg_gen::gps gps_;
 purePursuit::purePursuit(){
-
+	ROS_INFO("pure pursuit start");
 }
 
-void purePursuit::routingCallback(const geometry_msgs::PoseArray &routing){
+void purePursuit::routingCallback(const msg_gen::trajectory &routing){
 	// 确保一开始只订阅一次
-	if (targetPath_.size() < 1){
-		for (int i = 0; i < routing.poses.size(); ++i)
-		{
-			targetPath_.push_back({routing.poses[i].position.x, routing.poses[i].position.y, 0, 0});
-		}
+	std::cout << "routing.size: " << routing.pointsize << " targetPath_.size: " << targetPath_.size() << std::endl;
+	targetPath_.resize(routing.pointsize);
+	for (int i = 0; i < routing.pointsize; ++i)
+	{
+		targetPath_[i] = {routing.trajectorypoint[i].x, routing.trajectorypoint[i].y, 0, 0};
 	}
 }
 
@@ -21,9 +21,8 @@ void purePursuit::gpsCallback(const msg_gen::gps &pGps){
 }
 
 void purePursuit::run(){
-	ROS_INFO("pure pursuit start");
 	ros::NodeHandle n_;
-	ros::Subscriber routing_sub = n_.subscribe("/routing", 10, &purePursuit::routingCallback, this);
+	ros::Subscriber planning_sub = n_.subscribe("/trajectory_waypoints", 10, &purePursuit::routingCallback, this);
 	ros::Subscriber gps_sub = n_.subscribe("/gps", 10, &purePursuit::gpsCallback, this);
 
     ros::Publisher control_pub = n_.advertise<geometry_msgs::Pose>("/dynamic_waypoints", 10);

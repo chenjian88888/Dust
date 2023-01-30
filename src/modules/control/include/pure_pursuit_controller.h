@@ -9,6 +9,8 @@
 #include <vector>
 
 #include "gps.h"
+#include "trajectory.h"
+#include "TrajectoryPoint.h"
 
 
 
@@ -26,7 +28,7 @@ public:
 	purePursuit();
 	~purePursuit() = default;
 
-	void routingCallback(const geometry_msgs::PoseArray &routing);
+	void routingCallback(const msg_gen::trajectory &routing);
 	void gpsCallback(const msg_gen::gps &pGps);
 	void run();
 

@@ -24,6 +24,8 @@
 #include "path_matcher.h"
 #include "trajectoryPoint.h"
 #include "gps.h"
+#include "msg_gen/trajectory.h"
+#include "msg_gen/TrajectoryPoint.h"
 #include "PlanningTarget.h"
 #include "Obstacle.h"
 #include "cartesian_frenet_conversion.h"
@@ -97,17 +99,25 @@ public:
      */
     void ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
                                 std::array<double, 3> *ptr_s, std::array<double, 3> *ptr_d);
+    
+    /**
+     * @brief 将最优轨迹以话题形式发送给控制
+     * 
+     * @param best_path 
+     */
+    void pubTrajectory(DiscretizedTrajectory best_path);
 
   public:
     std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
     msg_gen::gps gps_;
     std::vector<double> gps_flag_;
+    nav_msgs::Path traj_points_; //局部规划的轨迹,nav_msgs类型
 
 private:
     // handle
     ros::NodeHandle n_;
     // publisher
-  	// ros::Publisher ;
+  	ros::Publisher trajectory_pub_;
   	// subscriber
   	ros::Subscriber referenceLine_subscriber_, gps_sub_;
 
@@ -135,6 +145,7 @@ private:
     std::vector<double> accumulated_s;                                  // 纵向距离
     double lon_decision_horizon = 0;// 前视距离
     InitialConditions lattice_ic_;
+
 
     // class
     DiscretizedTrajectory best_path_; //最佳路径

@@ -47,9 +47,9 @@ TrajectoryEvaluator::TrajectoryEvaluator(
         cost_queue_.emplace(Trajectory1dPair(lon_trajectory, lat_trajectory), cost);
       }
     }
-    // std::cout << "size:" << lat_trajectories.size() << std::endl;
+    std::cout << "size:" << lat_trajectories.size() << std::endl;
     //调试，打印队列
-    // std::cout << "size:" << cost_queue_.size() << std::endl;
+    std::cout << "size:" << cost_queue_.size() << std::endl;
     // while (!cost_queue_.empty())
     // {
     //     auto top = cost_queue_.top();

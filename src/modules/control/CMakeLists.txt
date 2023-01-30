@@ -21,13 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
 )
 
-add_message_files(FILES
-    
-)
-
-generate_messages(DEPENDENCIES
-    std_msgs
-)
 
 find_package(Eigen3 QUIET)
 find_package(OsqpEigen QUIET)
@@ -51,6 +44,7 @@ include_directories(
     include
     include/pure_pursuit_controller.h
     include/msg_gen
+    include/trajectoryPoint.h
     include ${catkin_INCLUDE_DIRS}
 )
 

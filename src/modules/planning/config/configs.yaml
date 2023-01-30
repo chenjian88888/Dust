@@ -29,8 +29,8 @@ FLAGS_weight_same_side_offset: 1.0       # Weight of same side lateral offset co
 
 FLAGS_speed_lower_bound: -0.1                       # The lowest speed allowed
 FLAGS_speed_upper_bound: 50                         # The highest speed allowed  Lattice专用
-FLAGS_longitudinal_acceleration_lower_bound: -0.3   # The lowest longitudinal acceleration allowed
-FLAGS_longitudinal_acceleration_upper_bound: 0.3      # The highest longitudinal acceleration allowed
+FLAGS_longitudinal_acceleration_lower_bound: -0.5   # The lowest longitudinal acceleration allowed
+FLAGS_longitudinal_acceleration_upper_bound: 0.5      # The highest longitudinal acceleration allowed
 FLAGS_comfort_acceleration_factor: 0.5              # Factor for comfort acceleration
 FLAGS_Max_curvature: 0.2                            # 轨迹的最大曲率
 FLAGS_kappa_bound: 0.10 
@@ -75,13 +75,13 @@ FLAGS_default_lon_buffer: 5.0            # "Default longitudinal buffer to sampl
 FLAGS_time_min_density: 1.0               # "Minimal time density to search sample points."
 FLAGS_num_sample_follow_per_timestamp: 3  #  "The number of sample points for each timestamp to follow"
 
-FLAGS_vehicle_width: 0.4   # 车的宽度,我们的车小
-FLAGS_vehicle_length: 0.8  # 车的长度,我们的车小
+FLAGS_vehicle_width: 1.8
+FLAGS_vehicle_length: 4.8
 # 改车的长度宽度之后，下面4个一定要改
-front_edge_to_center: 0.6 
-back_edge_to_center: 0.2  # 车尾到非几何中心的距离
-left_edge_to_center: 0.2
-right_edge_to_center: 0.2 
+front_edge_to_center: 2.34
+back_edge_to_center: 2.46  # 车尾到非几何中心的距离
+left_edge_to_center: 0.9
+right_edge_to_center: 0.9
 
 wheel_base: 2.8448               #  原来是2.8448,wheel_base
 max_steer_angle: 8.20304748437   #  8.20304748437

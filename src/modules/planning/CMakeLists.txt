@@ -72,13 +72,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
 )
 
-add_message_files(FILES
-    
-)
-
-generate_messages(DEPENDENCIES
-    std_msgs
-)
 
 find_package(Eigen3 QUIET)
 find_package(OsqpEigen QUIET)
@@ -115,4 +108,4 @@ include_directories(
 )
 
 add_executable(planning_node ${SRC_FILE})
-target_link_libraries(planning_node ${catkin_LIBRARIES} -lxerces-c osqp adolc ipopt yaml-cpp)
+target_link_libraries(planning_node ${catkin_LIBRARIES} -lxerces-c osqp adolc ipopt qpOASES yaml-cpp)

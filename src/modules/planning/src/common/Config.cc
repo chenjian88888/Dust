@@ -6,7 +6,7 @@
 
 Param_Configs::Param_Configs()
 {
-  YAML::Node config = YAML::LoadFile("/media/navigation/dust/sg/Dust/src/modules/planning/config/configs.yaml");
+  YAML::Node config = YAML::LoadFile("/home/hope/sg/simone/Dust/src/modules/planning/config/configs.yaml");
 
   FLAGS_trajectory_time_resolution = config["FLAGS_trajectory_time_resolution"].as<double>();
   FLAGS_weight_target_speed = config["FLAGS_weight_target_speed"].as<double>();

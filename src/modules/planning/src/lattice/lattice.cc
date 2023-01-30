@@ -30,6 +30,7 @@ std::vector<PathPoint> ToDiscretizedReferenceLine(
 }
 
 lattice::lattice(){
+    ROS_INFO("lattice plan start");
     // ros parameter settings
     ros::param::get("use_lateral_optimization", this->FLAGS_lateral_optimization);
 
@@ -42,6 +43,8 @@ lattice::lattice(){
     Obstacle ob(true); // 实例化类，构造函数订阅障碍物
 
     // publisher
+    // trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 10);        //发布局部轨迹
+    trajectory_pub_ = n_.advertise<nav_msgs::Path>("/trajectory_waypoints", 10);        //发布局部轨迹
 
     //初始参数的输入
     lattice_ic_ = {
@@ -124,7 +127,6 @@ void lattice::gpsCallback(const msg_gen::gps &pGps){
 }
 
 void lattice::plan() {
-    ROS_INFO("lattice plan start");
 
     std::vector<const Obstacle *> obstacles; // Apollo是这种类型
     for (size_t i = 0; i < AllObstacle.size(); i++){
@@ -141,6 +143,48 @@ void lattice::plan() {
     lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
     best_path_ = LatticePlan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
                                      FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, absolute_time);
+    // 发布轨迹
+    msg_gen::trajectory trajectory_d;
+    trajectory_d.pointsize = best_path_.size();
+    for (int i = 0; i < best_path_.size();++i){
+      msg_gen::TrajectoryPoint TrajectoryPoint_d;
+      TrajectoryPoint_d.x = best_path_[i].x;
+      TrajectoryPoint_d.y = best_path_[i].y;
+      TrajectoryPoint_d.z = best_path_[i].z;
+      TrajectoryPoint_d.theta = best_path_[i].theta;
+      TrajectoryPoint_d.kappa = best_path_[i].kappa;
+      TrajectoryPoint_d.dkappa = best_path_[i].dkappa;
+      TrajectoryPoint_d.v = best_path_[i].v;
+      TrajectoryPoint_d.a = best_path_[i].a;
+      TrajectoryPoint_d.relative_time = best_path_[i].relative_time;
+      TrajectoryPoint_d.absolute_time = best_path_[i].absolute_time;
+      TrajectoryPoint_d.d = best_path_[i].d;
+      TrajectoryPoint_d.d_d = best_path_[i].d_d;
+      TrajectoryPoint_d.d_dd = best_path_[i].d_dd;
+      TrajectoryPoint_d.s = best_path_[i].s;
+      TrajectoryPoint_d.s_d = best_path_[i].s_d;
+      TrajectoryPoint_d.s_dd = best_path_[i].s_dd;
+      TrajectoryPoint_d.s_ddd = best_path_[i].s_ddd;
+      TrajectoryPoint_d.d_ddd = best_path_[i].d_ddd;
+      trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
+    }
+    ROS_INFO("trajectory_d.size %d", trajectory_d.pointsize);
+
+    traj_points_.poses.clear();
+    traj_points_.header.frame_id = "world";
+    traj_points_.header.stamp = ros::Time::now();
+    for (int i = 0; i < best_path_.size(); i++)
+    {
+      geometry_msgs::PoseStamped pose_stamp;
+      pose_stamp.header.frame_id = "world";
+      pose_stamp.header.stamp = ros::Time::now();
+      pose_stamp.pose.position.x = best_path_[i].x;
+      pose_stamp.pose.position.y = best_path_[i].y;
+      pose_stamp.pose.position.z = 0;
+      traj_points_.poses.push_back(pose_stamp);
+    }
+
+    trajectory_pub_.publish(traj_points_);
 }
 
 void lattice::plan_start_point(double &current_time) {
@@ -165,10 +209,10 @@ void lattice::plan_start_point(double &current_time) {
         init_relative_time = 0.0;
         absolute_time = current_time;
     }
-    else
+    else if (best_path_.size() > 0)
     {
         // 非第一次运行
-        std::cout << "第2次运行" << std::endl;
+        std::cout << "非第一次运行且有历史轨迹" << std::endl;
         double x_cur = gps_.posX;// 定位
         double y_cur = gps_.posY;
         double theta_cur = gps_.oriZ;
@@ -179,7 +223,10 @@ void lattice::plan_start_point(double &current_time) {
         double ay_cur = gps_.accelY;
         double dt = 0.1;
         int index = 0;
+        std::cout << "best_path_.size: " << best_path_.size() << std::endl;
         for (int i = 0; i < best_path_.size()- 1;++i){
+            // 感觉不应该会进这个循环？
+            std::cout << "best_path_.size1: " << best_path_.size() << std::endl;
             if ( best_path_[i].absolute_time <= current_time &&  best_path_[i + 1].absolute_time > current_time){
                 index = i;
                 break;
@@ -300,6 +347,7 @@ DiscretizedTrajectory lattice::LatticePlan(
   // 5.轨迹拼接和最后的筛选
   while (trajectory_evaluator.has_more_trajectory_pairs())
   {
+    ROS_INFO("22222");
     double trajectory_pair_cost = trajectory_evaluator.top_trajectory_pair_cost();
     auto trajectory_pair = trajectory_evaluator.next_top_trajectory_pair();
     // combine two 1d trajectories to one 2d trajectory
@@ -333,6 +381,8 @@ DiscretizedTrajectory lattice::LatticePlan(
           // Intentional empty
           break;
         }
+        // 最后一个序列运行到这里了，所以报错了
+        ROS_INFO("3333");
         continue;
       }
       // Get instance of collision checker and constraint checker
@@ -351,6 +401,9 @@ DiscretizedTrajectory lattice::LatticePlan(
   return Optim_trajectory;
 }
 
+void lattice::pubTrajectory(DiscretizedTrajectory best_path){
+  
+}
 void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const TrajectoryPoint &cartesian_state,
                             std::array<double, 3> *ptr_s, std::array<double, 3> *ptr_d)
 {

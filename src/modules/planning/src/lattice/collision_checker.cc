@@ -88,13 +88,13 @@ void CollisionChecker::BuildPredictedEnvironment(const std::vector<const Obstacl
       TrajectoryPoint point = obstacle->GetPointAtTime(relative_time);
       Box2d box = obstacle->GetBoundingBox(point);
 
-      // std::cout << "box obstacle: " << obstacle->obstacle_id
-      //           << ", x: " << box.center_x()
-      //           << ", y: " << box.center_y()
-      //           << ", l: " << box.length()
-      //           << ", w: " << box.width()
-      //           << ", h:" << box.heading()
-      //           << "\n";
+      std::cout << "box obstacle: " << obstacle->obstacle_id
+                << ", x: " << box.center_x()
+                << ", y: " << box.center_y()
+                << ", l: " << box.length()
+                << ", w: " << box.width()
+                << ", h:" << box.heading()
+                << "\n";
       /*
         障碍物膨胀不难理解，为了安全，人在开车的过程中也会适当的远离附近车辆，
         但是这个膨胀方法显然太过死板了，或许百度内部早就优化了，
@@ -119,7 +119,6 @@ void CollisionChecker::BuildPredictedEnvironment(const std::vector<const Obstacl
     predicted_bounding_rectangles_.push_back(std::move(predicted_env));
     relative_time += Config_.FLAGS_trajectory_time_resolution;
   }
-  //  std::cout << "----------------------------" << "\n";
 }
 
 bool CollisionChecker::IsEgoVehicleInLane(const double ego_vehicle_s,

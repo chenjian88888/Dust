@@ -8,11 +8,13 @@
 PathTimeGraph::PathTimeGraph(const std::vector<const Obstacle *> &obstacles, const std::vector<ReferencePoint> &discretized_ref_points, const double s_start, const double s_end,
                              const double t_start, const double t_end, const std::array<double, 3> &init_d)
 {
-  if (s_start <= s_end)
+  std::cout << "s_start: " << s_start << " s_end: " << s_end << " t_start: " << t_start
+            << " t_end: " << t_end << std::endl;
+  if (s_start >= s_end)
   {
     ROS_ERROR("s_end is before s_start");
   }
-  if (t_start <= t_end)
+  if (t_start >= t_end)
   {
     ROS_ERROR("t_end is before t_start");
   }
