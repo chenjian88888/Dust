@@ -37,17 +37,15 @@ void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
 
 void  referenceLine::run() {
     ROS_INFO("planning start");
+    // 订阅障碍物
+    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
 
-    lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间;订阅障碍物topic /ground_truth
+    lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间
 
     ros::Rate loop_rate(10);
     int n = 0;
     while (ros::ok())
     {
-
-        
-        /* code */
-        // std::cout << "referenceline_.size: " << referenceline_.poses.size() << std::endl;
         if (referenceline_.poses.size() > 0)
         {
             referenceLine_pub_.publish(referenceline_);

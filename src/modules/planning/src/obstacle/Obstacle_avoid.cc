@@ -151,7 +151,7 @@ void Obstacle_avoid::visualization_points(PPoint ob_left_front, PPoint ob_left_b
   {
     visualization_msgs::Marker marker;
     marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 0);
-    marker.header.frame_id = "planning";
+    marker.header.frame_id = "world";
     marker.header.stamp = ros::Time::now();
     marker.ns = "basic_shapes";
     marker.id = i; //注意了

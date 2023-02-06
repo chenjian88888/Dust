@@ -20,6 +20,7 @@ Obstacle::Obstacle(bool sub_obstacle)
   //订阅感知的障碍物
   if (sub_obstacle == true)
   {
+    ROS_INFO("sub ground_truth");
     obstacle_sub_ = nObstacle_.subscribe("/ground_truth", 10, &Obstacle::setObstacles, this);
   }
 }
@@ -36,6 +37,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
   /*---------------------------------------获取障碍物信息----------------------------------------*/
   if (msgs->obstacleSize > 0) //如果感知有识别到障碍物
   {
+    ROS_INFO("sub ground_truth callback");
     AllObstacle.clear(); //每次接受障碍物的时候，清空，更新
     //存到AllObstacle
     for (size_t i = 0; i < msgs->obstacleSize; ++i)
@@ -81,6 +83,8 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         obs.obstacle_length = msgs->obstacle[i].length;
         obs.obstacle_width = msgs->obstacle[i].width;
         obs.obstacle_height = msgs->obstacle[i].height;
+        std::cout << "car radius = " << obs.obstacle_radius << " length = " << obs.obstacle_length
+                  << " width = " << obs.obstacle_width << std::endl;
       }
       else if (msgs->obstacle[i].type.SimOne_Obstacle_Type == 4) //圆形：Pedestrian
       {
@@ -90,7 +94,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         PPoint ob_center(obs.centerpoint.position.x, obs.centerpoint.position.y);
         oba.CalculateCarBoundaryPoint(1, 1, ob_center, obs.obstacle_theta, ob_left_front, ob_left_buttom,
                                       ob_right_buttom, ob_right_front);
-        // oba.visualization_points(ob_left_front, ob_left_buttom, ob_right_buttom, ob_right_front);//显示障碍物顶点
+        oba.visualization_points(ob_left_front, ob_left_buttom, ob_right_buttom, ob_right_front);//显示障碍物顶点
 
         std::vector<PPoint> ob_vector;
         ob_vector.emplace_back(ob_right_front);  //右下角
@@ -110,6 +114,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         obs.obstacle_length = msgs->obstacle[i].length;
         obs.obstacle_width = msgs->obstacle[i].width;
         obs.obstacle_height = msgs->obstacle[i].height;
+        std::cout << "people length = " << obs.obstacle_length << " width = " << obs.obstacle_width << std::endl;
       }
       // else if (msgs->objects[i].shape.type == 2) //多边形:未知
       // {

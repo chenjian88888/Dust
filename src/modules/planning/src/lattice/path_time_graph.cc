@@ -152,8 +152,8 @@ void PathTimeGraph::SetupObstacles(
     }
   }
   // std::cout << "static_obs_sl_boundaries_:" << static_obs_sl_boundaries_.size() << "\n";
-  // std::cout << "[" << path_range_.first << "," << path_range_.second << "]"
-  //           << "\n";
+  std::cout << "[" << path_range_.first << "," << path_range_.second << "]"
+            << "\n";
   // 动静态障碍物的存储
   std::sort(static_obs_sl_boundaries_.begin(), static_obs_sl_boundaries_.end(), [](const SL_Boundary &sl0, const SL_Boundary &sl1)
             { return sl0.start_s_ < sl1.start_s_; });

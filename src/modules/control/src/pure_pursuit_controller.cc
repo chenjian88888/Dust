@@ -6,13 +6,22 @@ purePursuit::purePursuit(){
 	ROS_INFO("pure pursuit start");
 }
 
+// void purePursuit::routingCallback(const geometry_msgs::PoseArray &routing){
+// 	// 确保一开始只订阅一次
+// 	targetPath_.resize(routing.poses.size());
+// 	for (int i = 0; i < routing.poses.size(); ++i)
+// 	{
+// 		targetPath_[i] = {routing.poses[i].position.x, routing.poses[i].position.y, 0, 0};
+// 	}
+// }
+
 void purePursuit::routingCallback(const msg_gen::trajectory &routing){
 	// 确保一开始只订阅一次
 	std::cout << "routing.size: " << routing.pointsize << " targetPath_.size: " << targetPath_.size() << std::endl;
 	targetPath_.resize(routing.pointsize);
 	for (int i = 0; i < routing.pointsize; ++i)
 	{
-		targetPath_[i] = {routing.trajectorypoint[i].x, routing.trajectorypoint[i].y, 0, 0};
+		targetPath_[i] = {routing.trajectorypoint[i].x, routing.trajectorypoint[i].y, routing.trajectorypoint[i].v, 0};
 	}
 }
 
@@ -23,6 +32,8 @@ void purePursuit::gpsCallback(const msg_gen::gps &pGps){
 void purePursuit::run(){
 	ros::NodeHandle n_;
 	ros::Subscriber planning_sub = n_.subscribe("/trajectory_waypoints", 10, &purePursuit::routingCallback, this);
+	// ros::Subscriber planning_sub = n_.subscribe("/routing", 10, &purePursuit::routingCallback, this);
+
 	ros::Subscriber gps_sub = n_.subscribe("/gps", 10, &purePursuit::gpsCallback, this);
 
     ros::Publisher control_pub = n_.advertise<geometry_msgs::Pose>("/dynamic_waypoints", 10);
@@ -32,9 +43,10 @@ void purePursuit::run(){
 		// 先订阅到消息再可以发布
 		
 		if (targetPath_.size() > 0) {
-			double steer = calculateCmd(targetPath_, gps_);
+			std::array<double,2> sv = calculateCmd(targetPath_, gps_);
 			geometry_msgs::Pose tempPose;
-			tempPose.position.x = steer;
+			tempPose.position.x = sv[0];
+			tempPose.position.y = sv[1];
 			control_pub.publish(tempPose);
 		}
 		ros::spinOnce();
@@ -43,7 +55,7 @@ void purePursuit::run(){
 	
 }
 
-double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
+std::array<double, 2> purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
 	
 	int index = 0;
 
@@ -84,6 +96,7 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 	double ld = sqrt(pow(targetPath[forwardIndex].y - y, 2) +
 		pow(targetPath[forwardIndex].x - x, 2)); // distance 
 	double steer = -atan2(2. * (2.85) * sin(deltaAlfa), ld) * 36 / (7 * M_PI);
+	double velocity = targetPath[forwardIndex].kappa;
 	std::cout << "steer: " << steer << std::endl;
 	// if (steer > 135) {
 	// 	steer = 135;
@@ -91,5 +104,5 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 	// else if (steer < -135) {
 	// 	steer = -135;
 	// }
-	return steer;
+	return {steer, velocity};
 }

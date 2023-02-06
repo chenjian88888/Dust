@@ -11,7 +11,7 @@ echo "update"
 
 echo "Install base ros package"
 
-# sudo apt-get update
+sudo apt-get update
 sudo apt-get install -y \
 	libboost-all-dev \
 	libboost-python-dev \

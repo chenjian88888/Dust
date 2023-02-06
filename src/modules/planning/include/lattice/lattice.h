@@ -107,6 +107,8 @@ public:
      */
     void pubTrajectory(DiscretizedTrajectory best_path);
 
+    bool is_update_dynamic(nav_msgs::Path &trj_point_array, int size);
+
   public:
     std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
     msg_gen::gps gps_;
