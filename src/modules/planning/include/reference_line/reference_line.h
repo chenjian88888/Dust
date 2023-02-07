@@ -31,6 +31,10 @@
 #include "fem_pos_deviation_sqp_osqp_interface.h"
 #include "fem_pos_deviation_ipopt_interface.h"
 #include "lattice/lattice.h"
+// #include "path_matcher.h"
+// #include "reference_point.h"
+// #include "trajectoryPoint.h"
+#include "planning_base.h"
 
 namespace dust{
 namespace reference_line{
@@ -55,6 +59,12 @@ public:
 	 * @param routing 
 	 */
 	void routingCallback(const geometry_msgs::PoseArray &routing);
+	/**
+     * @brief gps的回调函数
+     * 
+     * @param pGps 
+     */
+    void gpsCallback(const msg_gen::gps &pGps);
 	/**
 	 * @brief planning的入口函数
 	 * 
@@ -85,6 +95,22 @@ public:
 	 * @param distance 
 	 */
 	void average_interpolation(Eigen::MatrixXd& input, Eigen::MatrixXd& output, double interval_dis, double distance);
+	/**
+	 * @brief 计算平滑后的参考线的kappa、theta，赋值到成员变量reference_points中
+	 * 
+	 * @param path_point 
+	 */
+	void referencePointsCalc(const nav_msgs::Path &path_point)
+
+	/**
+     * @brief 计算规划起点:第一次运行，规划起点就是定位点，轨迹的absolute_time=current_time；之后每次运行先判断控制是否跟上
+     * 控制跟上：规划起点是轨迹绝对时间上往后0.1s的轨迹点，absolute_time是在上一帧轨迹中找到距current_time+0.1最接近的轨迹点的索引
+     * 控制没跟上：规划起点根据车辆动力学合理外推，absolute_time=current_time+0.1;
+     *
+     */
+    void plan_start_point(double &tt);
+
+	bool is_update_dynamic(nav_msgs::Path &trj_point_array, int size);
 
 private:
 	bool CosThetaSmooth(const std::vector<std::pair<double, double>>& raw_point2d, const std::vector<double>& bounds,
@@ -115,9 +141,11 @@ private:
 	// handle
 	ros::NodeHandle n_;
 	// publisher
-  	ros::Publisher referenceLine_pub_;
+  	ros::Publisher trajectory_pub_, rviz_pub_;
   	// subscriber
-  	ros::Subscriber routing_sub_;
+  	ros::Subscriber routing_sub_, gps_sub_;
+    
+	std::shared_ptr<PlanningBase> planning_base;
 
 	// param
 	Eigen::MatrixXd routing_waypoints_;// 中心点坐标
@@ -125,7 +153,19 @@ private:
 	double zero_x_ = 0.0;
 	double zero_y_ = 0.0;
 	nav_msgs::Path referenceline_;
+
+	std::pair<std::vector<double>, std::vector<double>> reference_path; //参考路径点位置（x,y）
+    std::vector<double> accumulated_s;                                  // 纵向距离
+	std::vector<ReferencePoint> reference_points;                       // 参考路径点参数
+	nav_msgs::Path traj_points_; //局部规划的轨迹,nav_msgs类型
+	msg_gen::gps gps_;
+
+	// flag
+	std::vector<double> gps_flag_;
+	bool is_first_run = true;
+	bool FLAGS_lateral_optimization; //选择二次规划
 	bool which_smoothers;  //选择参考线平滑方式
+	int which_planners;
 	/*
 	如果考虑参考线的曲率约束，其优化问题是非线性的，
 	可以使用ipopt非线性求解器求解（内点法），也可以使用osqp二次规划求解器来用SQP方法求解；
@@ -133,7 +173,33 @@ private:
 	*/
 	bool apply_curvature_constraint;  //是否使用曲率约束
 	bool use_sqp = false;                     //是否使用SQP方法求解
-	std::vector<double> routing_waypoint_flag_; // 添加flag，确保参考线平滑一次
+	std::vector<double> routing_waypoint_flag_; // 添加flag，确保参考线平滑只计算一次
+	std::vector<double> path_point_flag_; // 添加flag，确保参考线的kappa、theta等只计算一次
+
+	double d0;                   //初始的横向偏移值 [m]
+    double dd0;                  //初始的横向速度 [m/s]
+    double ddd0;                 //初始的横向加速度 [m/s^2]
+    double s0;                   //初始的纵向值[m]
+    double ds0;                  //初始的纵向速度[m/s]
+    double dds0;                 //初始的纵向加速度[m/ss]
+    double init_relative_time;   //规划起始点的时间
+    double absolute_time;        //轨迹上的绝对时间
+    double x_init;
+    double y_init;
+    double z_init;
+    double v_init;
+    double a_init;
+    double theta_init;
+    // double theta_end;
+    double kappa_init;
+    double dkappa_init;
+
+
+    double lon_decision_horizon = 0;// 前视距离
+
+	// class
+    InitialConditions lattice_ic_;
+	DiscretizedTrajectory best_path_; //最佳路径
 };
 
 } // namespace reference_line

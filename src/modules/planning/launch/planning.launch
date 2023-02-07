@@ -4,6 +4,10 @@
     <arg name="which_smoother" default="false"/>    
     <param name="which_smoothers" value="$(arg which_smoother)"/>
 
+    <!-- 规划的方式选择: 0:lattice  1:emplanner-->
+    <arg name="which_planner" value="0"/>    
+    <param name="which_planners" value="$(arg which_planner)"/>
+
     <!-- 是否使用曲率约束 -->
     <arg name="curvature_constraint" default="false"/>    
     <param name="apply_curvature_constraint" value="$(arg curvature_constraint)"/>
