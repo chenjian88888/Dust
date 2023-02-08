@@ -30,16 +30,6 @@ std::vector<PathPoint> ToDiscretizedReferenceLine(
 }
 
 lattice::lattice(){
-    ROS_INFO("lattice plan start");
-
-    // subscriber
-    // referenceLine_subscriber_ = n_.subscribe("/referenceLine_smoothed", 10, &lattice::referenceLineCallback, this);
-
-    // publisher
-    // trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 10);        //发布局部轨迹
-    // trajectory_pub_ = n_.advertise<nav_msgs::Path>("/trajectory_waypoints", 10);        //发布局部轨迹
-
-    
     
 }
 
@@ -135,7 +125,7 @@ DiscretizedTrajectory lattice::plan(
     std::cout << "Total_Trajectory_Cost = " << trajectory_pair_cost << "\n";
     break;
   }
-  ROS_WARN("trj_num :%d",Optim_trajectory.size());
+  ROS_WARN("trj_num :%f",Optim_trajectory.size());
   return Optim_trajectory;
 }
 
@@ -151,5 +141,5 @@ void lattice::ComputeInitFrenetState(const ReferencePoint &matched_point, const 
       cartesian_state.path_point().kappa, ptr_s, ptr_d);
 }
 
-} // namespace lattice
+} // namespace planning
 } // namespace dust

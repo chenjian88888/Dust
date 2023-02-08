@@ -36,6 +36,8 @@
 // #include "trajectoryPoint.h"
 #include "planning_base.h"
 
+using namespace dust::planning;
+
 namespace dust{
 namespace reference_line{
 	
@@ -100,7 +102,7 @@ public:
 	 * 
 	 * @param path_point 
 	 */
-	void referencePointsCalc(const nav_msgs::Path &path_point)
+	void referencePointsCalc(const nav_msgs::Path &path_point);
 
 	/**
      * @brief 计算规划起点:第一次运行，规划起点就是定位点，轨迹的absolute_time=current_time；之后每次运行先判断控制是否跟上
@@ -145,7 +147,7 @@ private:
   	// subscriber
   	ros::Subscriber routing_sub_, gps_sub_;
     
-	std::shared_ptr<PlanningBase> planning_base;
+	std::shared_ptr<PlanningBase> planning_base_;
 
 	// param
 	Eigen::MatrixXd routing_waypoints_;// 中心点坐标

@@ -97,7 +97,7 @@ std::array<double, 2> purePursuit::calculateCmd(const std::vector<RefPoint>& tar
 		pow(targetPath[forwardIndex].x - x, 2)); // distance 
 	double steer = -atan2(2. * (2.85) * sin(deltaAlfa), ld) * 36 / (7 * M_PI);
 	double velocity = targetPath[forwardIndex].kappa;
-	std::cout << "steer: " << steer << std::endl;
+	std::cout << "velocity: " << velocity << "  steer: " << steer << std::endl;
 	// if (steer > 135) {
 	// 	steer = 135;
 	// }

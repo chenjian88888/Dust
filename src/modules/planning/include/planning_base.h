@@ -18,7 +18,7 @@ namespace planning{
 class PlanningBase {
 
 public:
-    PlanningBase() = delete;
+    PlanningBase() = default;
 
     virtual ~PlanningBase()=default;
 
@@ -29,6 +29,8 @@ public:
       const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
       const double &init_relative_time, const double lon_decision_horizon, const double &absolute_time) = 0;
 };
+
+// PlanningBase::PlanningBase(){}
 
 } // dust
 } // planning 

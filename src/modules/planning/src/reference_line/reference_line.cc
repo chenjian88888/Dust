@@ -7,8 +7,6 @@ std::vector<Obstacle> AllObstacle;                        //感知一帧识别�
 namespace dust{
 namespace reference_line{
 
-using namespace dust::planning;
-
 referenceLine::referenceLine(){
     // ros parameter settings
     ros::param::get("which_smoothers", this->which_smoothers);
@@ -23,21 +21,22 @@ referenceLine::referenceLine(){
     trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 10);        //发布局部轨迹
     rviz_pub_ = n_.advertise<nav_msgs::Path>("/rviz_trajectory_waypoints", 10);        //发布局部轨迹
 
-    ROS_INFO("which_planners = %f",which_planners);
+    ROS_INFO("which_planners = %i",which_planners);
     switch (which_planners)
     {
       case 0:
         std::cout << "lattice planning!!!" << std::endl;
-        planning_base = std::make_shared<lattice>();
+        planning_base_ = std::make_shared<lattice>();
         break;
       case 1:
 
         break;
       default:
         std::cout << "default:lattice planning!!!" << std::endl;
-        planning_base = std::make_shared<lattice>();
+        planning_base_ = std::make_shared<lattice>();
         break;
     }
+    
 }
 
 void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
@@ -63,14 +62,13 @@ void referenceLine::gpsCallback(const msg_gen::gps &pGps){
 }
 
 void  referenceLine::run() {
-    ROS_INFO("planning start");
     // 订阅障碍物
     Obstacle ob(true); // 实例化类，构造函数订阅障碍物
 
     // lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间
+    
 
     ros::Rate loop_rate(10);
-    int n = 0;
     while (ros::ok())
     {
         if (referenceline_.poses.size() > 0)
@@ -121,7 +119,7 @@ void  referenceLine::run() {
           // PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
           PlanningTarget planning_target(10, accumulated_s); // 目标 km/h
           lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
-          best_path_ = planning_base->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
+          best_path_ = planning_base_->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
                       FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, absolute_time);
 
           // 发布轨迹
