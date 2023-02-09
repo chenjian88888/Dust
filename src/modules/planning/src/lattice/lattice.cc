@@ -40,7 +40,7 @@ DiscretizedTrajectory lattice::plan(
     const std::vector<const Obstacle *> &obstacles,
     const std::vector<double> &accumulated_s,
     const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
-    const double &init_relative_time, const double lon_decision_horizon, const double &absolute_time)
+    const double &init_relative_time, const double lon_decision_horizon, const double &plan_start_time)
 {
   //ROS_WARN("start_lattice");
   DiscretizedTrajectory Optim_trajectory;
@@ -81,7 +81,7 @@ DiscretizedTrajectory lattice::plan(
     auto trajectory_pair = trajectory_evaluator.next_top_trajectory_pair();
     // combine two 1d trajectories to one 2d trajectory
     auto combined_trajectory = trajectorycombiner_.Combine(accumulated_s, *trajectory_pair.first, *trajectory_pair.second,
-                                                          reference_points, init_relative_time, absolute_time);
+                                                          reference_points, init_relative_time, plan_start_time);
 
     // 采样时候才调用，二次规划不用
     if (lateral_optimization == false)
@@ -125,7 +125,7 @@ DiscretizedTrajectory lattice::plan(
     std::cout << "Total_Trajectory_Cost = " << trajectory_pair_cost << "\n";
     break;
   }
-  ROS_WARN("trj_num :%f",Optim_trajectory.size());
+  ROS_WARN("trj_num :%d",Optim_trajectory.size());
   return Optim_trajectory;
 }
 

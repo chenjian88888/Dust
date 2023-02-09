@@ -105,9 +105,9 @@ public:
 	void referencePointsCalc(const nav_msgs::Path &path_point);
 
 	/**
-     * @brief 计算规划起点:第一次运行，规划起点就是定位点，轨迹的absolute_time=current_time；之后每次运行先判断控制是否跟上
-     * 控制跟上：规划起点是轨迹绝对时间上往后0.1s的轨迹点，absolute_time是在上一帧轨迹中找到距current_time+0.1最接近的轨迹点的索引
-     * 控制没跟上：规划起点根据车辆动力学合理外推，absolute_time=current_time+0.1;
+     * @brief 计算规划起点:第一次运行，规划起点就是定位点，轨迹的plan_start_time=current_time；之后每次运行先判断控制是否跟上
+     * 控制跟上：规划起点是轨迹绝对时间上往后0.1s的轨迹点，plan_start_time是在上一帧轨迹中找到距current_time+0.1最接近的轨迹点的索引
+     * 控制没跟上：规划起点根据车辆动力学合理外推，plan_start_time=current_time+0.1;
      *
      */
     void plan_start_point(double &tt);
@@ -185,7 +185,7 @@ private:
     double ds0;                  //初始的纵向速度[m/s]
     double dds0;                 //初始的纵向加速度[m/ss]
     double init_relative_time;   //规划起始点的时间
-    double absolute_time;        //轨迹上的绝对时间
+    double plan_start_time = 0;        //规划开始的时间
     double x_init;
     double y_init;
     double z_init;
@@ -202,6 +202,10 @@ private:
 	// class
     InitialConditions lattice_ic_;
 	DiscretizedTrajectory best_path_; //最佳路径
+	DiscretizedTrajectory pre_trajectory_;// 上一帧的轨迹
+	DiscretizedTrajectory stitch_trajectory_;// 拼接轨迹
+	DiscretizedTrajectory final_trajectory_;// 最终的轨迹
+	
 };
 
 } // namespace reference_line

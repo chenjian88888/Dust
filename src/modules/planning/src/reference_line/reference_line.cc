@@ -63,10 +63,7 @@ void referenceLine::gpsCallback(const msg_gen::gps &pGps){
 
 void  referenceLine::run() {
     // 订阅障碍物
-    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
-
-    // lattice latti; // 构造lattice类，创造/referenceLine_smoothed话题空间
-    
+    Obstacle ob(true); // 实例化类，构造函数订阅障碍物    
 
     ros::Rate loop_rate(10);
     while (ros::ok())
@@ -86,8 +83,9 @@ void  referenceLine::run() {
         // 确保gps和reference_points收到数据之后再进行
         if (reference_points.size() > 0 && gps_flag_.size() > 0)
         {
+          pre_trajectory_ = final_trajectory_;
           double current_time = (double)(ros::WallTime::now().toSec());
-          // ROS_INFO("current_time %f", current_time);
+          ROS_INFO("current_time %f", current_time);
           plan_start_point(current_time);
           //初始参数的输入
           lattice_ic_ = {
@@ -120,33 +118,51 @@ void  referenceLine::run() {
           PlanningTarget planning_target(10, accumulated_s); // 目标 km/h
           lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
           best_path_ = planning_base_->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
-                      FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, absolute_time);
+                      FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
+          ROS_INFO("plan_start_time = %f", plan_start_time);
+
+          std::cout << "best_path_.size() = " << best_path_.size() << std::endl;
+          std::cout << "pre_trajectory_.size = " << pre_trajectory_.size() << std::endl;
+          int final_path_size = best_path_.size() + stitch_trajectory_.size();
+          
+          
+          final_trajectory_.resize(final_path_size);
+          for (int i = 0; i < stitch_trajectory_.size(); ++i)
+          {
+            final_trajectory_[i] = stitch_trajectory_[i];
+          }
+          
+          for (int i = stitch_trajectory_.size(); i < final_path_size; ++i)
+          {
+            final_trajectory_[i] = best_path_[i-stitch_trajectory_.size()];
+          }
+          
 
           // 发布轨迹
           msg_gen::trajectory trajectory_d;
-          trajectory_d.pointsize = best_path_.size();
-          for (int i = 0; i < best_path_.size();++i){
+          trajectory_d.pointsize = final_trajectory_.size();
+          for (int i = 0; i < final_trajectory_.size();++i){
             msg_gen::TrajectoryPoint TrajectoryPoint_d;
-            TrajectoryPoint_d.x = best_path_[i].x;
-            TrajectoryPoint_d.y = best_path_[i].y;
-            // std::cout << "x_" << i << " = " << best_path_[i].x << " y_" << i << " = " << best_path_[i].y<< std::endl;
-            TrajectoryPoint_d.z = best_path_[i].z;
-            TrajectoryPoint_d.theta = best_path_[i].theta;
-            TrajectoryPoint_d.kappa = best_path_[i].kappa;
-            TrajectoryPoint_d.dkappa = best_path_[i].dkappa;
-            TrajectoryPoint_d.v = best_path_[i].v;
-            std::cout << "trajectory v" << i <<  " = " << TrajectoryPoint_d.v << std::endl;
-            TrajectoryPoint_d.a = best_path_[i].a;
-            TrajectoryPoint_d.relative_time = best_path_[i].relative_time;
-            TrajectoryPoint_d.absolute_time = best_path_[i].absolute_time;
-            TrajectoryPoint_d.d = best_path_[i].d;
-            TrajectoryPoint_d.d_d = best_path_[i].d_d;
-            TrajectoryPoint_d.d_dd = best_path_[i].d_dd;
-            TrajectoryPoint_d.s = best_path_[i].s;
-            TrajectoryPoint_d.s_d = best_path_[i].s_d;
-            TrajectoryPoint_d.s_dd = best_path_[i].s_dd;
-            TrajectoryPoint_d.s_ddd = best_path_[i].s_ddd;
-            TrajectoryPoint_d.d_ddd = best_path_[i].d_ddd;
+            TrajectoryPoint_d.x = final_trajectory_[i].x;
+            TrajectoryPoint_d.y = final_trajectory_[i].y;
+            std::cout << "x_" << i << " = " << final_trajectory_[i].x << " y_" << i << " = " << final_trajectory_[i].y<< std::endl;
+            TrajectoryPoint_d.z = final_trajectory_[i].z;
+            TrajectoryPoint_d.theta = final_trajectory_[i].theta;
+            TrajectoryPoint_d.kappa = final_trajectory_[i].kappa;
+            TrajectoryPoint_d.dkappa = final_trajectory_[i].dkappa;
+            TrajectoryPoint_d.v = final_trajectory_[i].v;
+            // std::cout << "trajectory v" << i <<  " = " << TrajectoryPoint_d.v << std::endl;
+            TrajectoryPoint_d.a = final_trajectory_[i].a;
+            TrajectoryPoint_d.relative_time = final_trajectory_[i].relative_time;
+            TrajectoryPoint_d.absolute_time = final_trajectory_[i].absolute_time;
+            TrajectoryPoint_d.d = final_trajectory_[i].d;
+            TrajectoryPoint_d.d_d = final_trajectory_[i].d_d;
+            TrajectoryPoint_d.d_dd = final_trajectory_[i].d_dd;
+            TrajectoryPoint_d.s = final_trajectory_[i].s;
+            TrajectoryPoint_d.s_d = final_trajectory_[i].s_d;
+            TrajectoryPoint_d.s_dd = final_trajectory_[i].s_dd;
+            TrajectoryPoint_d.s_ddd = final_trajectory_[i].s_ddd;
+            TrajectoryPoint_d.d_ddd = final_trajectory_[i].d_ddd;
             trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
           }
           ROS_INFO("trajectory_d.size %d", trajectory_d.pointsize);
@@ -154,13 +170,13 @@ void  referenceLine::run() {
           traj_points_.poses.clear();
           traj_points_.header.frame_id = "world";
           traj_points_.header.stamp = ros::Time::now();
-          for (int i = 0; i < best_path_.size(); i++)
+          for (int i = 0; i < final_trajectory_.size(); i++)
           {
             geometry_msgs::PoseStamped pose_stamp;
             pose_stamp.header.frame_id = "world";
             pose_stamp.header.stamp = ros::Time::now();
-            pose_stamp.pose.position.x = best_path_[i].x;
-            pose_stamp.pose.position.y = best_path_[i].y;
+            pose_stamp.pose.position.x = final_trajectory_[i].x;
+            pose_stamp.pose.position.y = final_trajectory_[i].y;
             pose_stamp.pose.position.z = 0;
             traj_points_.poses.push_back(pose_stamp);
           }
@@ -168,26 +184,28 @@ void  referenceLine::run() {
           trajectory_pub_.publish(trajectory_d);
           rviz_pub_.publish(traj_points_);// rviz可视化
 
-          int update_pos = 10;
-          if (is_update_dynamic(traj_points_, update_pos+8)){
-            s0 = best_path_[update_pos].s;
-            ds0 = best_path_[update_pos].s_d;
-            dds0 = best_path_[update_pos].s_dd;
-            d0 = best_path_[update_pos].d;
-            dd0 = best_path_[update_pos].d_d;
-            ddd0 = best_path_[update_pos].d_dd;
+          // int update_pos = 10;
+          // if (is_update_dynamic(traj_points_, update_pos+8)){
+          //   std::cout << "update planning start point" << std::endl;
+          //   s0 = best_path_[update_pos].s;
+          //   ds0 = best_path_[update_pos].s_d;
+          //   dds0 = best_path_[update_pos].s_dd;
+          //   d0 = best_path_[update_pos].d;
+          //   dd0 = best_path_[update_pos].d_d;
+          //   ddd0 = best_path_[update_pos].d_dd;
 
-            init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
-            x_init = best_path_[update_pos].x;
-            y_init = best_path_[update_pos].y;
-            z_init = 0;
-            v_init = best_path_[update_pos].v;
-            a_init = best_path_[update_pos].a;
+          //   init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
+          //   x_init = best_path_[update_pos].x;
+          //   y_init = best_path_[update_pos].y;
+          //   z_init = 0;
+          //   v_init = best_path_[update_pos].v;
+          //   a_init = best_path_[update_pos].a;
 
-            theta_init = best_path_[update_pos].theta;
-            kappa_init = best_path_[update_pos].kappa;
-            dkappa_init = best_path_[update_pos].dkappa;
-          }
+          //   theta_init = best_path_[update_pos].theta;
+          //   kappa_init = best_path_[update_pos].kappa;
+          //   dkappa_init = best_path_[update_pos].dkappa;
+          // }
+
         }
 
         
@@ -406,8 +424,8 @@ void referenceLine::plan_start_point(double &current_time) {
         x_init = gps_.posX;// 定位
         y_init = gps_.posY;
         z_init = 0;
-        v_init = std::sqrt(gps_.velX*gps_.velX + gps_.velY*gps_.velY);
-        a_init = std::sqrt(gps_.accelX*gps_.accelX + gps_.accelY*gps_.accelY);
+        v_init = 0;
+        a_init = 0;
         theta_init = gps_.oriZ;
         kappa_init = 0;
         dkappa_init = 0;
@@ -418,9 +436,9 @@ void referenceLine::plan_start_point(double &current_time) {
         dds0 = 0;
         ddd0 = 0;
         init_relative_time = 0.0;
-        absolute_time = current_time + 0.1;// start point absolute time
+        plan_start_time = current_time + 0.1;// start point absolute time
     }
-    else if (best_path_.size() < 0)
+    else
     {
         // 非第一次运行
         std::cout << "非第一次运行且有历史轨迹" << std::endl;
@@ -436,13 +454,13 @@ void referenceLine::plan_start_point(double &current_time) {
         int index = 0;
         // std::cout << "best_path_.size: " << best_path_.size() << std::endl;
         // ROS_INFO("current_time1 %f", current_time);
-        ROS_INFO("best_path_[0].absolute_time %f", best_path_[0].absolute_time);
-        ROS_INFO("best_path_[1].absolute_time %f", best_path_[1].absolute_time);
-        ROS_INFO("best_path_[best_path_.size()-1].absolute_time %f", best_path_[best_path_.size()-1].absolute_time);
-        for (int i = 0; i < best_path_.size()- 1;++i){
+        ROS_INFO("pre_trajectory_[0].absolute_time %f", pre_trajectory_[0].absolute_time);
+        ROS_INFO("pre_trajectory_[1].absolute_time %f", pre_trajectory_[1].absolute_time);
+        ROS_INFO("pre_trajectory_[pre_trajectory_.size()-1].absolute_time %f", pre_trajectory_[pre_trajectory_.size()-1].absolute_time);
+        for (int i = 0; i < pre_trajectory_.size()- 1;++i){
             // 感觉不应该会进这个循环？
             // std::cout << "best_path_.size1: " << best_path_.size() << std::endl;
-            if ( best_path_[i].absolute_time <= current_time &&  best_path_[i + 1].absolute_time > current_time){
+            if ( pre_trajectory_[i].absolute_time <= current_time &&  pre_trajectory_[i + 1].absolute_time > current_time){
                 index = i;
                 std::cout << "match point index: " << i << std::endl;
                 break;
@@ -451,12 +469,12 @@ void referenceLine::plan_start_point(double &current_time) {
         // 上一周期规划的本周期车辆应该在的位置
         double pre_x_desire = best_path_[index].x;
         double pre_y_desire = best_path_[index].y;
-        double pre_x_theta = best_path_[index].theta;
+        double pre_theta_desire = best_path_[index].theta;
         // 计算横纵向误差
         Eigen::Matrix<double, 2, 1> tor;
-        tor << cos(pre_x_theta), sin(pre_x_theta);
+        tor << cos(pre_theta_desire), sin(pre_theta_desire);
         Eigen::Matrix<double, 2, 1> nor;
-        nor << -sin(pre_x_theta), cos(pre_x_theta);
+        nor << -sin(pre_theta_desire), cos(pre_theta_desire);
         // 误差向量
         Eigen::Matrix<double, 2, 1> d_err;
         d_err << x_cur - pre_x_desire, y_cur - pre_y_desire;
@@ -469,6 +487,7 @@ void referenceLine::plan_start_point(double &current_time) {
         // 如果纵向误差大于2.5或者横向误差大于0.5认为控制没跟上
         if (lon_err > 2.5 || lat_err > 0.5){
             ROS_INFO("out of control, use dynamic to deduce");
+            std::cout << "ax_cur = " << ax_cur << " ay_cur = " << ay_cur << std::endl;
             x_init = x_cur + vx_cur * dt + 0.5 * ax_cur * dt * dt;
             y_init = y_cur + vy_cur * dt + 0.5 * ay_cur * dt * dt;
             z_init = 0;
@@ -484,42 +503,64 @@ void referenceLine::plan_start_point(double &current_time) {
             dds0 = 0;
             ddd0 = 0;
             
-            absolute_time = current_time + 0.1;
+            plan_start_time = current_time + 0.1;
         }
         else {
           ROS_INFO("good control");
           int index_good = 0;
-          for (int i = 0; i < best_path_.size() - 1; ++i){
-            if (best_path_[i].absolute_time <= current_time+0.1 && best_path_[i + 1].absolute_time > current_time+0.1)
+          for (int i = index; i < pre_trajectory_.size() - 1; ++i){
+            if (pre_trajectory_[i].absolute_time <= current_time+0.1 && pre_trajectory_[i + 1].absolute_time > current_time+0.1)
             {
               index_good = i;
               std::cout << "plan start point index: " << i << std::endl;
               break;
             }
           }
-          x_init = best_path_[index_good].x;
-          y_init = best_path_[index_good].y;
+          x_init = pre_trajectory_[index_good].x;
+          y_init = pre_trajectory_[index_good].y;
           z_init = 0;
-          v_init = best_path_[index_good].v;
-          a_init = best_path_[index_good].a;
-          theta_init = best_path_[index_good].theta;
-          kappa_init = best_path_[index_good].kappa;
-          dkappa_init = best_path_[index_good].dkappa;
+          v_init = pre_trajectory_[index_good].v;
+          a_init = pre_trajectory_[index_good].a;
+          theta_init = pre_trajectory_[index_good].theta;
+          kappa_init = pre_trajectory_[index_good].kappa;
+          dkappa_init = pre_trajectory_[index_good].dkappa;
           // 上一帧轨迹的速度和加速度是指轨迹的切向速度，切向加速度
           // 计算轨迹在current_time + 100ms这个点的切向法向量
           // tor << cos(theta_init), sin(theta_init);
           // nor << -sin(theta_init), cos(theta_init);
-          // Eigen::Matrix<double, 2, 1> a_tor = best_path_[index_good].a * tor;
-          // Eigen::Matrix<double, 2, 1> a_nor = best_path_[index_good].v * best_path_[index_good].v * kappa_init * nor;
+          // Eigen::Matrix<double, 2, 1> a_tor = pre_trajectory_[index_good].a * tor;
+          // Eigen::Matrix<double, 2, 1> a_nor = pre_trajectory_[index_good].v * pre_trajectory_[index_good].v * kappa_init * nor;
           // dds0 = a_tor[0] + a_nor[0];
           // ddd0 = a_tor[1] + a_nor[1];
-          s0 = best_path_[index_good].s;
-          ds0 = best_path_[index_good].s_d;
-          dd0 = best_path_[index_good].d_d;
-          d0 = best_path_[index_good].d;
-          dds0 = best_path_[index_good].s_dd;
-          ddd0 = best_path_[index_good].d_dd;
-          absolute_time = best_path_[index_good].absolute_time;
+          s0 = pre_trajectory_[index_good].s;
+          ds0 = pre_trajectory_[index_good].s_d;
+          dd0 = pre_trajectory_[index_good].d_d;
+          d0 = pre_trajectory_[index_good].d;
+          dds0 = pre_trajectory_[index_good].s_dd;
+          ddd0 = pre_trajectory_[index_good].d_dd;
+          plan_start_time = pre_trajectory_[index_good].absolute_time;
+          
+          // 轨迹拼接
+          if (index_good > 0){
+            index_good = index_good - 1;
+          }
+          
+          ROS_INFO("index_good = %d",index_good);
+          
+          if (index_good > 20) {
+            // 拼接20个点
+            stitch_trajectory_.resize(20);
+            for (int i = 0; i < 20;++i){
+              stitch_trajectory_[i] = pre_trajectory_[index_good-19+i];
+            }
+          }else {
+            stitch_trajectory_.resize(index_good);
+            for (int i = 0; i < index_good; ++i)
+            {
+              stitch_trajectory_[i] = pre_trajectory_[i];
+            }
+          }
+          std::cout << "stitch_trajectory_.size() = " << stitch_trajectory_.size() << std::endl;
         }
     }
 }
