@@ -2,25 +2,11 @@
 #define __PURE_PURSUIT__
 
 #pragma once
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/PoseArray.h>
-
-#include <vector>
-
-#include "gps.h"
-#include "trajectory.h"
-#include "TrajectoryPoint.h"
 
 
 
-struct RefPoint
-{
-	double x;
-	double y;
-	double kappa;
-	double theta;
-};
+
+
 
 class purePursuit
 {

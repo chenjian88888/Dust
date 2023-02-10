@@ -87,6 +87,7 @@ SL_Boundary PathTimeGraph::ComputeObstacleBoundary(
   double start_l(std::numeric_limits<double>::max());
   double end_l(std::numeric_limits<double>::lowest());
 
+  // 找到静态障碍物的极大极小值
   for (const auto &point : vertices) //遍历顶点
   {
     // std::cout << "point.x():" << point.x() << ","
@@ -182,9 +183,8 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   double right_width = Config_.FLAGS_default_reference_line_width * 0.5;
 
   // SL的ROI范围
+  // 静态障碍物在我的前方，在我的后方
   if (sl_boundary.start_s_ > path_range_.second ||
-      sl_boundary.start_s_ < path_range_.first ||
-      sl_boundary.end_s_ > path_range_.second ||
       sl_boundary.end_s_ < path_range_.first ||
       sl_boundary.start_l_ > left_width ||
       sl_boundary.end_l_ < -right_width)
@@ -224,7 +224,7 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   else
     path_time_obstacle_map_[obstacle_id].is_static_obstacle = false;
 
-  //
+  // 构建矩形
   path_time_obstacle_map_[obstacle_id].set_bottom_left_point(SetPathTimePoint(obstacle_id, sl_boundary.start_s_, 0.0));
   path_time_obstacle_map_[obstacle_id].set_bottom_right_point(SetPathTimePoint(obstacle_id, sl_boundary.start_s_, Config_.FLAGS_trajectory_time_length));
   path_time_obstacle_map_[obstacle_id].set_upper_left_point(SetPathTimePoint(obstacle_id, sl_boundary.end_s_, 0.0));
@@ -282,8 +282,6 @@ void PathTimeGraph::SetDynamicObstacle(const Obstacle *obstacle,
 
     // The obstacle is not shown on the region to be considered.
     if (sl_boundary.start_s_ > path_range_.second ||
-        sl_boundary.start_s_ < path_range_.first ||
-        sl_boundary.end_s_ > path_range_.second ||
         sl_boundary.end_s_ < path_range_.first ||
         sl_boundary.start_l_ > left_width ||
         sl_boundary.end_l_ < -right_width)

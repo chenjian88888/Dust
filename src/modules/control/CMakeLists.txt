@@ -6,9 +6,10 @@ project(control)
 add_compile_options(-std=c++14)
 
 set(SRC_FILE
-    src/pure_pursuit_controller.cc
+    src/lat_control/lqr_controller.cc
+    src/lat_control/pure_pursuit_controller.cc
     src/control_node.cc
-
+    src/controller.cc
 )
 
 ## Find catkin macros and libraries
@@ -42,9 +43,10 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
+    include/lat_control
     include/pure_pursuit_controller.h
     include/msg_gen
-    include/trajectoryPoint.h
+    include/controller.h
     include ${catkin_INCLUDE_DIRS}
 )
 

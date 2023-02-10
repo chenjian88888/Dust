@@ -53,9 +53,11 @@ DiscretizedTrajectory lattice::plan(
   std::array<double, 3> init_d;
   ComputeInitFrenetState(matched_point, planning_init_point, &init_s, &init_d);
   std::cout << "init_s[0] = " << init_s[0] << " init_d[0] = " << init_d[0] << std::endl;
+  // parse the decision and get the planning target.
   // 与Apollo不同，我们的前探距离不加上init_s[0]，因为我们的仿真的参考线不长。设置障碍物，存储SL ST图
+  // 根据障碍物的列表算ST图
   auto ptr_path_time_graph = std::make_shared<PathTimeGraph>(obstacles, reference_points, init_s[0],
-                                                             init_s[0] + 20, //前瞻多少m lon_decision_horizon
+                                                             init_s[0] + 200, //前瞻多少m lon_decision_horizon
                                                              0.0, Config_.FLAGS_trajectory_time_length, init_d);
 
   auto ptr_reference_line = std::make_shared<std::vector<PathPoint>>(ToDiscretizedReferenceLine(reference_points));

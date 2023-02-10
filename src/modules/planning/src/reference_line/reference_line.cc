@@ -121,8 +121,8 @@ void  referenceLine::run() {
                       FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
           ROS_INFO("plan_start_time = %f", plan_start_time);
 
-          std::cout << "best_path_.size() = " << best_path_.size() << std::endl;
-          std::cout << "pre_trajectory_.size = " << pre_trajectory_.size() << std::endl;
+          // std::cout << "best_path_.size() = " << best_path_.size() << std::endl;
+          // std::cout << "pre_trajectory_.size = " << pre_trajectory_.size() << std::endl;
           int final_path_size = best_path_.size() + stitch_trajectory_.size();
           
           
@@ -184,27 +184,27 @@ void  referenceLine::run() {
           trajectory_pub_.publish(trajectory_d);
           rviz_pub_.publish(traj_points_);// rviz可视化
 
-          // int update_pos = 10;
-          // if (is_update_dynamic(traj_points_, update_pos+8)){
-          //   std::cout << "update planning start point" << std::endl;
-          //   s0 = best_path_[update_pos].s;
-          //   ds0 = best_path_[update_pos].s_d;
-          //   dds0 = best_path_[update_pos].s_dd;
-          //   d0 = best_path_[update_pos].d;
-          //   dd0 = best_path_[update_pos].d_d;
-          //   ddd0 = best_path_[update_pos].d_dd;
+          int update_pos = 10;
+          if (is_update_dynamic(traj_points_, update_pos+8)){
+            std::cout << "update planning start point" << std::endl;
+            s0 = best_path_[update_pos].s;
+            ds0 = best_path_[update_pos].s_d;
+            dds0 = best_path_[update_pos].s_dd;
+            d0 = best_path_[update_pos].d;
+            dd0 = best_path_[update_pos].d_d;
+            ddd0 = best_path_[update_pos].d_dd;
 
-          //   init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
-          //   x_init = best_path_[update_pos].x;
-          //   y_init = best_path_[update_pos].y;
-          //   z_init = 0;
-          //   v_init = best_path_[update_pos].v;
-          //   a_init = best_path_[update_pos].a;
+            init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
+            x_init = best_path_[update_pos].x;
+            y_init = best_path_[update_pos].y;
+            z_init = 0;
+            v_init = best_path_[update_pos].v;
+            a_init = best_path_[update_pos].a;
 
-          //   theta_init = best_path_[update_pos].theta;
-          //   kappa_init = best_path_[update_pos].kappa;
-          //   dkappa_init = best_path_[update_pos].dkappa;
-          // }
+            theta_init = best_path_[update_pos].theta;
+            kappa_init = best_path_[update_pos].kappa;
+            dkappa_init = best_path_[update_pos].dkappa;
+          }
 
         }
 
@@ -438,7 +438,7 @@ void referenceLine::plan_start_point(double &current_time) {
         init_relative_time = 0.0;
         plan_start_time = current_time + 0.1;// start point absolute time
     }
-    else
+    else if(best_path_.size() < 0)
     {
         // 非第一次运行
         std::cout << "非第一次运行且有历史轨迹" << std::endl;
@@ -452,11 +452,10 @@ void referenceLine::plan_start_point(double &current_time) {
         double ay_cur = gps_.accelY;
         double dt = 0.1;
         int index = 0;
-        // std::cout << "best_path_.size: " << best_path_.size() << std::endl;
-        // ROS_INFO("current_time1 %f", current_time);
-        ROS_INFO("pre_trajectory_[0].absolute_time %f", pre_trajectory_[0].absolute_time);
-        ROS_INFO("pre_trajectory_[1].absolute_time %f", pre_trajectory_[1].absolute_time);
-        ROS_INFO("pre_trajectory_[pre_trajectory_.size()-1].absolute_time %f", pre_trajectory_[pre_trajectory_.size()-1].absolute_time);
+        for (int i = 0; i < pre_trajectory_.size();++i){
+          ROS_INFO("pre_trajectory_[%d].absolute_time %f", i, pre_trajectory_[i].absolute_time);
+        }
+        
         for (int i = 0; i < pre_trajectory_.size()- 1;++i){
             // 感觉不应该会进这个循环？
             // std::cout << "best_path_.size1: " << best_path_.size() << std::endl;
@@ -467,9 +466,9 @@ void referenceLine::plan_start_point(double &current_time) {
             }
         }
         // 上一周期规划的本周期车辆应该在的位置
-        double pre_x_desire = best_path_[index].x;
-        double pre_y_desire = best_path_[index].y;
-        double pre_theta_desire = best_path_[index].theta;
+        double pre_x_desire = pre_trajectory_[index].x;
+        double pre_y_desire = pre_trajectory_[index].y;
+        double pre_theta_desire = pre_trajectory_[index].theta;
         // 计算横纵向误差
         Eigen::Matrix<double, 2, 1> tor;
         tor << cos(pre_theta_desire), sin(pre_theta_desire);
