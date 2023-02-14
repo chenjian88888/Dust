@@ -34,6 +34,7 @@ struct RefPoint
 	double y;
 	double kappa;
 	double theta;
+	double speed;
 };
 
 /**

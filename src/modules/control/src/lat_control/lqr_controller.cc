@@ -65,7 +65,7 @@ double lqrControl::theta_angle(const std::vector<std::pair<double, double>>& trj
     int index = 0;
     double min_dis = (std::numeric_limits<int>::max)();
     for (int i = 0; i < trj_point_array.size(); ++i) {
-        double dis = pow(trj_point_array[i].first, 2) + pow(trj_point_array[i].second, 2);
+        double dis = pow(trj_point_array[i].first - currentPositionX, 2) + pow(trj_point_array[i].second - currentPositionY, 2);
         if (dis < min_dis) {
             min_dis = dis;
             index = i;

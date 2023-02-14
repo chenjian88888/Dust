@@ -5,14 +5,6 @@ purePursuit::purePursuit(){
 	ROS_INFO("pure pursuit start");
 }
 
-// void purePursuit::routingCallback(const geometry_msgs::PoseArray &routing){
-// 	// 确保一开始只订阅一次
-// 	targetPath_.resize(routing.poses.size());
-// 	for (int i = 0; i < routing.poses.size(); ++i)
-// 	{
-// 		targetPath_[i] = {routing.poses[i].position.x, routing.poses[i].position.y, 0, 0};
-// 	}
-// }
 
 
 
@@ -62,7 +54,6 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 	double ld = sqrt(pow(targetPath[forwardIndex].y - y, 2) +
 		pow(targetPath[forwardIndex].x - x, 2)); // distance 
 	double steer = -atan2(2. * (2.85) * sin(deltaAlfa), ld) * 36 / (7 * M_PI);
-	double velocity = targetPath[index].kappa;
 	std::cout << "velocity: " << velocity << "  steer: " << steer << std::endl;
 	// if (steer > 135) {
 	// 	steer = 135;

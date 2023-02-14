@@ -44,7 +44,7 @@ void Trajectory1dGenerator::GenerateLongitudinalTrajectoryBundle(const PlanningT
   // 巡航轨迹是无规则规划的,不考虑障碍物
   GenerateSpeedProfilesForCruising(planning_target.cruise_speed(), ptr_lon_trajectory_bundle); //巡航
 
-  GenerateSpeedProfilesForPathTimeObstacles(ptr_lon_trajectory_bundle); //超车或者跟随前车
+  GenerateSpeedProfilesForPathTimeObstacles(ptr_lon_trajectory_bundle); //超车或者跟随前车，根据st图做速度规划
 
   if (planning_target.has_stop_point()) //停车
   {

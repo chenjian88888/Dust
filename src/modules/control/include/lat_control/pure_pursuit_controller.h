@@ -2,11 +2,10 @@
 #define __PURE_PURSUIT__
 
 #pragma once
+#include "controller.h"
 
-
-
-
-
+namespace dust {
+namespace control {
 
 class purePursuit
 {
@@ -21,6 +20,9 @@ public:
 
 	std::array<double, 2> calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps);
 };
+
+} // control
+} // dust
 
 #endif // !__PURE_PURSUIT__
 

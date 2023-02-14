@@ -1,6 +1,6 @@
 #include "controller.h"
 
-controller::control(const double kp, const double ki, const double kd) {
+controller::controller(const double kp, const double ki, const double kd) {
     kp_ = kp;
     ki_ = ki;
     kd_ = kd;
@@ -11,41 +11,11 @@ controller::control(const double kp, const double ki, const double kd) {
 	first_init_ = true;
 }
 
-// calc forwardindex
-int controller::calc_forwardIndex(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
-
+double controller::calculateThrottleBreak(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
 	int index = 0;
 	double min_dis = (std::numeric_limits<int>::max)();
 	for (int i = 0; i < targetPath.size(); ++i) {
-		double dis = pow(targetPath[i].x, 2) + pow(targetPath[i].y, 2);
-		if (dis < min_dis) {
-
-			min_dis = dis;
-			index = i;
-		}
-	}
-	int forwardIndex = 0;
-	double minProgDist = 3.5;// 3.5
-	double progTime = 0.8; // 0.8s
-	double mainVehicleSpeed = pEgo->speed;
-	double progDist = mainVehicleSpeed * progTime > minProgDist ? mainVehicleSpeed * progTime : minProgDist;
-
-	for (; index < targetPath.size(); ++index) {
-		forwardIndex = index;
-		double distance = sqrtf((double)pow(targetPath[index].x, 2) +
-			pow((double)targetPath[index].y, 2));
-		if (distance >= progDist) {
-			return forwardIndex;
-		}
-	}
-	return 0;
-}
-
-double controller::calculateThrottleBreak(const std::vector<RefPoint>& targetPath, PanoSimBasicsBus::Ego* pEgo, size_t forwardIndex) {
-	int index = 0;
-	double min_dis = (std::numeric_limits<int>::max)();
-	for (int i = 0; i < targetPath.size(); ++i) {
-		double dis = pow(targetPath[i].x, 2) + pow(targetPath[i].y, 2);
+		double dis = pow(targetPath[i].x - gps.posX, 2) + pow(targetPath[i].y - gps.posY, 2);
 		if (dis < min_dis) {
 
 			min_dis = dis;
@@ -53,20 +23,13 @@ double controller::calculateThrottleBreak(const std::vector<RefPoint>& targetPat
 		}
 	}
 
-	
-	/*std::cout << "longtitude forwardIndex: " << forwardIndex << std::endl;
-	std::cout << "nearKappa : " << nearKappa << "\t farKappa : " << farKappa << "\t lastKappa :" << lastKappa << std::endl;
-	std::cout << "max_v is :" << max_v << "\tand pEgo->speed is : " << pEgo->speed << std::endl;
-	std::cout << "targetPath.size() is :" << targetPath.size() << std::endl;
-	std::cout << "this_kappa is :" << this_kappa << std::endl;*/
-	std::cout << pEgo->speed;
-	return PID_Control(max_v > 5.0 ? 5.0 : max_v, pEgo->speed);
+	return PID_Control(targetPath[index].speed, gps.v);
 }
 
 double controller::PID_Control(double value_target, double value_now) {
 	
 	double dt = 0.01;
-	if (fabs(integral_) > 5) {
+	if (std::fabs(integral_) > 5) {
 		reset();
 	}
 	this->error_sub_ = (value_target - value_now) - this->previous_error_;
