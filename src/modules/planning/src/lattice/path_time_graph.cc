@@ -32,6 +32,8 @@ std::vector<std::vector<std::pair<double, double>>> PathTimeGraph::GetPathBlocki
                                                                                             const double t_resolution)
 {
   // 每个时刻，每个障碍物的s_lower, s_upper
+  // 两层vector嵌套，最里边表示同一时间所有障碍物的信息
+  // 最外边表示所有时间障碍物的信息
   std::vector<std::vector<std::pair<double, double>>> intervals;
   for (double t = t_start; t <= t_end; t += t_resolution)
   {
@@ -87,7 +89,7 @@ SL_Boundary PathTimeGraph::ComputeObstacleBoundary(
   double start_l(std::numeric_limits<double>::max());
   double end_l(std::numeric_limits<double>::lowest());
 
-  // 找到静态障碍物的极大极小值
+  // 找到静态障碍物顶点的极大极小值
   for (const auto &point : vertices) //遍历顶点
   {
     // std::cout << "point.x():" << point.x() << ","
@@ -156,6 +158,7 @@ void PathTimeGraph::SetupObstacles(
   std::cout << "[" << path_range_.first << "," << path_range_.second << "]"
             << "\n";
   // 动静态障碍物的存储
+  // 静态障碍物s由近及远排序
   std::sort(static_obs_sl_boundaries_.begin(), static_obs_sl_boundaries_.end(), [](const SL_Boundary &sl0, const SL_Boundary &sl1)
             { return sl0.start_s_ < sl1.start_s_; });
 
@@ -176,7 +179,9 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
 {
   std::string obstacle_id = obstacle->obstacle_id; //赋值id
 
-  SL_Boundary sl_boundary = ComputeObstacleBoundary(obstacle->polygon_points, discretized_ref_points);
+  // 计算障碍物sl的边界值
+  std::cout << "static obs polygon size = " << obstacle->polygon_points.size() << std::endl;
+  SL_Boundary sl_boundary = ComputeObstacleBoundary(obstacle->polygon_points, discretized_ref_points);// 静态障碍物car的sl boundary怎么算的？
 
   //道路宽度定死先
   double left_width = Config_.FLAGS_default_reference_line_width * 0.5;
@@ -189,7 +194,9 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
       sl_boundary.start_l_ > left_width ||
       sl_boundary.end_l_ < -right_width)
   {
-    std::cout << "Obstacle [" << obstacle_id << "] is out of range."<<"\n";
+    std::cout << obstacle_id << std::endl;
+    std::cout << "Obstacle [" << obstacle_id << "] is out of range."
+              << "\n";
     return;
   }
 
@@ -204,7 +211,7 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   sl_boundary.obstacle_type = obstacle->obstacle_type;
 
   //障碍物类型
-  sl_boundary.SetBoundaryType(SL_Boundary::BoundaryType::YIELD);
+  sl_boundary.SetBoundaryType(SL_Boundary::BoundaryType::OVERTAKE);
   if (sl_boundary.obstacle_velocity < 0.1)
     sl_boundary.is_static_obstacle = true;
   else
@@ -240,15 +247,15 @@ void PathTimeGraph::SetStaticObstacle(const Obstacle *obstacle,
   path_time_obstacle_map_[obstacle_id].SetUpper_points(upper_points);
   path_time_obstacle_map_[obstacle_id].SetLower_points(lower_points);
   // 障碍物边界类型，测试使用
-  path_time_obstacle_map_[obstacle_id].SetBoundaryType(ST_Boundary::BoundaryType::YIELD);
+  path_time_obstacle_map_[obstacle_id].SetBoundaryType(ST_Boundary::BoundaryType::OVERTAKE);
 
   static_obs_sl_boundaries_.push_back(std::move(sl_boundary));
 
-  // std::cout << "SL-Graph mapping static obstacle: " << obstacle_id
-  //           << ", start_s : " << sl_boundary.start_s_
-  //           << ", end_s : " << sl_boundary.end_s_
-  //           << ", start_l : " << sl_boundary.start_l_
-  //           << ", end_l : " << sl_boundary.end_l_ << "\n";
+  std::cout << "SL-Graph mapping static obstacle: " << obstacle_id
+            << ", start_s : " << sl_boundary.start_s_
+            << ", end_s : " << sl_boundary.end_s_
+            << ", start_l : " << sl_boundary.start_l_
+            << ", end_l : " << sl_boundary.end_l_ << "\n";
 }
 
 const std::vector<ST_Boundary> &PathTimeGraph::GetPathTimeObstacles() const

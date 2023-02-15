@@ -22,11 +22,13 @@
 #include "trajectory.h"
 #include "TrajectoryPoint.h"
 
-#include <Eigen\Dense>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Dense>
 
 
 namespace dust{
-namespace contorl{
+namespace control{
 
 struct RefPoint
 {
@@ -51,14 +53,10 @@ public:
 	virtual double calculateCmd(const std::vector<RefPoint> &targetPath, const msg_gen::gps &gps) = 0;
 
 public:
-	// calc forwardindex
-	int calc_forwardIndex(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps);
 
-	double calculateThrottleBreak(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps, size_t forwardIndex);
+	double calculateThrottleBreak(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps);
 
 	double PID_Control(double value_target, double value_now);
-
-	double calculateKappa(const std::vector<RefPoint>& targetPath, int idx);
 
 	void reset();
 

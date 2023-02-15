@@ -46,7 +46,7 @@ void Trajectory1dGenerator::GenerateLongitudinalTrajectoryBundle(const PlanningT
 
   GenerateSpeedProfilesForPathTimeObstacles(ptr_lon_trajectory_bundle); //超车或者跟随前车，根据st图做速度规划
 
-  if (planning_target.has_stop_point()) //停车
+  if (planning_target.has_stop_point()) //停车点
   {
     GenerateSpeedProfilesForStopping(planning_target.stop_point(), ptr_lon_trajectory_bundle);
   }
@@ -60,7 +60,7 @@ void Trajectory1dGenerator::GenerateLateralTrajectoryBundle(Trajectory1DBundle *
     // Use the common function to generate trajectory bundles.
     GenerateTrajectory1DBundle<5>(init_lat_state_, end_conditions, ptr_lat_trajectory_bundle);
   }
-  else //二次规划
+  else //二次规划osqp对比着学
   {
     double s_min = init_lon_state_[0]; //自主车的初始纵向距离
     // double s_min = 0.0; //自主车的初始纵向距离

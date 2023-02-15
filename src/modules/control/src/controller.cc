@@ -1,5 +1,8 @@
 #include "controller.h"
 
+namespace dust {
+namespace control {
+
 controller::controller(const double kp, const double ki, const double kd) {
     kp_ = kp;
     ki_ = ki;
@@ -23,7 +26,7 @@ double controller::calculateThrottleBreak(const std::vector<RefPoint>& targetPat
 		}
 	}
 
-	return PID_Control(targetPath[index].speed, gps.v);
+	return PID_Control(targetPath[index].speed, std::sqrt(pow(gps.velX,2)+pow(gps.velY,2)+pow(gps.velZ,2)));
 }
 
 double controller::PID_Control(double value_target, double value_now) {
@@ -71,3 +74,5 @@ void controller::reset() {
 	first_init_ = true;
 }
 
+} // control
+} // dust

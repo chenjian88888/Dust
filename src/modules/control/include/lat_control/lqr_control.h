@@ -71,4 +71,4 @@ private:
 } // dust
 
 
-#endif __LQR_CONTROL__
+#endif // !__LQR_CONTROL__

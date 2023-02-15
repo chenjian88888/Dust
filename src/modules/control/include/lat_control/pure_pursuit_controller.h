@@ -7,10 +7,10 @@
 namespace dust {
 namespace control {
 
-class purePursuit
+class purePursuit : public controller
 {
 public:
-	purePursuit();
+	purePursuit(const double kp, const double ki, const double kd);
 	~purePursuit() = default;
 
 	void routingCallback(const msg_gen::trajectory &routing);
@@ -18,7 +18,7 @@ public:
 	void gpsCallback(const msg_gen::gps &pGps);
 	void run();
 
-	std::array<double, 2> calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps);
+	double calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps);
 };
 
 } // control

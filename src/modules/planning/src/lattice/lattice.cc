@@ -61,9 +61,9 @@ DiscretizedTrajectory lattice::plan(
                                                              0.0, Config_.FLAGS_trajectory_time_length, init_d);
 
   auto ptr_reference_line = std::make_shared<std::vector<PathPoint>>(ToDiscretizedReferenceLine(reference_points));
-  auto ptr_prediction_querier = std::make_shared<PredictionQuerier>(obstacles, ptr_reference_line);// 将障碍物按照id 存储为map容器(key, value)
+  auto ptr_prediction_querier = std::make_shared<PredictionQuerier>(obstacles, ptr_reference_line);// 将障碍物按照id 存储为map容器(key, value) 预测
 
-  // 3.生成纵向和横向轨迹
+  // 3.生成横纵向轨迹
   Trajectory1dGenerator trajectory1d_generator(init_s, init_d, ptr_path_time_graph, ptr_prediction_querier);
   std::vector<std::shared_ptr<Curve1d>> lon_trajectory1d_bundle;
   std::vector<std::shared_ptr<Curve1d>> lat_trajectory1d_bundle;

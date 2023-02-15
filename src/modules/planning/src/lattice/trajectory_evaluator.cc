@@ -11,10 +11,10 @@ TrajectoryEvaluator::TrajectoryEvaluator(
 {
   const double start_time = 0.0;
   const double end_time = Config_.FLAGS_trajectory_time_length;
-  // 每个时刻，每个障碍物的s_lower, s_upper
-  path_time_intervals_ = path_time_graph_->GetPathBlockingIntervals(start_time, end_time, Config_.FLAGS_trajectory_time_resolution);
+  // 每个时刻，每个障碍物的s_lower, s_upper,找出ST图中可能发生碰撞的s值
+  path_time_intervals_ = path_time_graph_->GetPathBlockingIntervals(start_time, end_time, Config_.FLAGS_trajectory_time_resolution);// 0.1
 
-  reference_s_dot_ = ComputeLongitudinalGuideVelocity(planning_target);
+  reference_s_dot_ = ComputeLongitudinalGuideVelocity(planning_target);// 对轨迹上每个点赋值参考速度
 
   if (!lon_trajectories.empty() && !lat_trajectories.empty())
   {
@@ -150,7 +150,7 @@ double TrajectoryEvaluator::LonObjectiveCost(const std::shared_ptr<Curve1d> &lon
     // 当前t
     double t = static_cast<double>(i) * Config_.FLAGS_trajectory_time_resolution;
     // V_ref_t - V_evaluate_t
-    double cost = ref_s_dots[i] - lon_trajectory->Evaluate(1, t);
+    double cost = ref_s_dots[i] - lon_trajectory->Evaluate(1, t);// 参考速度-实际速度
     // sum_0_to_length(t^2*|V_ref_t - V_evaluate_t|)
     speed_cost_sqr_sum += t * t * std::fabs(cost);
     // sum_0_to_length(t^2)
@@ -158,7 +158,7 @@ double TrajectoryEvaluator::LonObjectiveCost(const std::shared_ptr<Curve1d> &lon
   }
   // Cost_speed
   double speed_cost =
-      speed_cost_sqr_sum / (speed_cost_weight_sum + Config_.FLAGS_numerical_epsilon);
+      speed_cost_sqr_sum / (speed_cost_weight_sum + Config_.FLAGS_numerical_epsilon);// 1e-7
   // Cost_dist
   double dist_travelled_cost = 1.0 / (1.0 + dist_s);
   // Cost_Object
@@ -337,6 +337,7 @@ bool TrajectoryEvaluator::fuzzy_within(const double v, const double lower, const
 bool TrajectoryEvaluator::IsValidLongitudinalTrajectory(const Curve1d &lon_trajectory) const
 {
   double t = 0.0;
+  // ParamLength时间长度从1-8s  这个paramlength是哪个子类？ ConstantJerkTrajectory1d?
   while (t < lon_trajectory.ParamLength())
   {
     double v = lon_trajectory.Evaluate(1, t); // evaluate_v
@@ -366,13 +367,14 @@ std::vector<double> TrajectoryEvaluator::ComputeLongitudinalGuideVelocity(const 
 
   if (!planning_target.has_stop_point())
   {
+    // 没有停止点
     PiecewiseAccelerationTrajectory1d lon_traj(init_s_[0], cruise_v);
 
-    lon_traj.AppendSegment(0.0, Config_.FLAGS_trajectory_time_length + Config_.FLAGS_numerical_epsilon);
+    lon_traj.AppendSegment(0.0, Config_.FLAGS_trajectory_time_length + Config_.FLAGS_numerical_epsilon);// 加速度 时间,计算始末状态的位移、速度、加速度、时间
 
     for (double t = 0.0; t < Config_.FLAGS_trajectory_time_length; t += Config_.FLAGS_trajectory_time_resolution)
     {
-      reference_s_dot.emplace_back(lon_traj.Evaluate(1, t));
+      reference_s_dot.emplace_back(lon_traj.Evaluate(1, t));// 计算每一时刻的速度
     }
   }
   else
@@ -391,8 +393,8 @@ std::vector<double> TrajectoryEvaluator::ComputeLongitudinalGuideVelocity(const 
       return reference_s_dot;
     }
 
-    double a_comfort = Config_.FLAGS_longitudinal_acceleration_upper_bound * Config_.FLAGS_comfort_acceleration_factor;
-    double d_comfort = -Config_.FLAGS_longitudinal_acceleration_lower_bound * Config_.FLAGS_comfort_acceleration_factor;
+    double a_comfort = Config_.FLAGS_longitudinal_acceleration_upper_bound * Config_.FLAGS_comfort_acceleration_factor;// 4.0 0.5
+    double d_comfort = -Config_.FLAGS_longitudinal_acceleration_lower_bound * Config_.FLAGS_comfort_acceleration_factor;// -4.5 0.5
 
     std::shared_ptr<Trajectory1d> lon_ref_trajectory = PiecewiseBrakingTrajectoryGenerator::Generate(
         planning_target.stop_point(), init_s_[0], planning_target.cruise_speed(), init_s_[1],

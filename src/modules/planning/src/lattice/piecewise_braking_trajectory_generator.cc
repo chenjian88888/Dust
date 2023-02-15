@@ -29,6 +29,7 @@ std::shared_ptr<Curve1d> PiecewiseBrakingTrajectoryGenerator::Generate(const dou
   // otherwise, the vehicle can stop from current speed with comfort brake.
   if (v_curr > v_target)
   {
+    // 匀减速到巡航速度
     double t_cruise = (s_dist - comfort_stop_dist) / v_target;
     double t_rampdown = (v_curr - v_target) / d_comfort;
     double t_dec = v_target / d_comfort;
@@ -45,6 +46,7 @@ std::shared_ptr<Curve1d> PiecewiseBrakingTrajectoryGenerator::Generate(const dou
   }
   else
   {
+    // 车辆现在的速度小于巡航速度
     double t_rampup = (v_target - v_curr) / a_comfort;
     double t_rampdown = (v_target - v_curr) / d_comfort;
     double s_ramp = (v_curr + v_target) * (t_rampup + t_rampdown) * 0.5;
@@ -52,6 +54,7 @@ std::shared_ptr<Curve1d> PiecewiseBrakingTrajectoryGenerator::Generate(const dou
     double s_rest = s_dist - s_ramp - comfort_stop_dist;
     if (s_rest > 0)
     {
+      // 可以做匀速运动
       double t_cruise = s_rest / v_target;
       double t_dec = v_target / d_comfort;
 

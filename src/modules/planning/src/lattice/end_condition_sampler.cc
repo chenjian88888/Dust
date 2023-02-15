@@ -34,6 +34,7 @@ std::vector<Condition> EndConditionSampler::SampleLonEndConditionsForCruising(co
   {
     // 1.get采样时间
     // time interval is one second plus the last one 0.01
+    // 九个时间点 0.01 1 2 3 4 5 6 7 8
     constexpr size_t num_of_time_samples = 9;
     std::array<double, num_of_time_samples> time_samples;
     for (size_t i = 1; i < num_of_time_samples; ++i)
@@ -45,10 +46,11 @@ std::vector<Condition> EndConditionSampler::SampleLonEndConditionsForCruising(co
     // 2.get采样速度
     for (const auto &time : time_samples)
     {
+      // 该时刻速度的上下限值
       double v_upper = std::min(feasible_region_.VUpper(time), ref_cruise_speed);
       double v_lower = feasible_region_.VLower(time);
 
-      State lower_end_s = {0.0, v_lower, 0.0};
+      State lower_end_s = {0.0, v_lower, 0.0};// 位移 速度 加速度
       end_s_conditions.emplace_back(lower_end_s, time);
 
       State upper_end_s = {0.0, v_upper, 0.0};
@@ -58,8 +60,8 @@ std::vector<Condition> EndConditionSampler::SampleLonEndConditionsForCruising(co
       // Number of sample velocities
       // 4.样本速度数目
       size_t num_of_mid_points;
-      num_of_mid_points = std::min(static_cast<size_t>(Config_.FLAGS_num_velocity_sample - 2),
-                                   static_cast<size_t>(v_range / Config_.FLAGS_min_velocity_sample_gap));
+      num_of_mid_points = std::min(static_cast<size_t>(Config_.FLAGS_num_velocity_sample - 2), // 6
+                                   static_cast<size_t>(v_range / Config_.FLAGS_min_velocity_sample_gap));// 1m/s
       // std::cout << "("
       //           << "v_lower:" << v_lower << ","
       //           << "v_upper:" << v_upper << ")" << std::endl;
@@ -107,7 +109,7 @@ std::vector<Condition> EndConditionSampler::SampleLonEndConditionsForPathTimePoi
 
   for (const SamplePoint &sample_point : sample_points)
   {
-    if (sample_point.path_time_point.t() < Config_.FLAGS_polynomial_minimal_param)
+    if (sample_point.path_time_point.t() < Config_.FLAGS_polynomial_minimal_param)// 0.01
     {
       continue;
     }
@@ -141,9 +143,9 @@ std::vector<SamplePoint> EndConditionSampler::QueryPathTimeObstacleSamplePoints(
 //跟车采样
 void EndConditionSampler::QueryFollowPathTimePoints(const std::string &obstacle_id, std::vector<SamplePoint> *const sample_points) const
 {
-  // 获取障碍物周围点的ST
+  // 获取障碍物周围点的ST,得到采样点
   std::vector<STPoint> follow_path_time_points =
-      ptr_path_time_graph_->GetObstacleSurroundingPoints(obstacle_id, -Config_.FLAGS_numerical_epsilon, Config_.FLAGS_time_min_density);
+      ptr_path_time_graph_->GetObstacleSurroundingPoints(obstacle_id, -Config_.FLAGS_numerical_epsilon, Config_.FLAGS_time_min_density);// 1e-6 1s
 
   // for (size_t i = 0; i < follow_path_time_points.size(); i++)
   // {
@@ -162,11 +164,11 @@ void EndConditionSampler::QueryFollowPathTimePoints(const std::string &obstacle_
 
     // Generate candidate s
     double s_upper = path_time_point.s() - Config_.front_edge_to_center;
-    double s_lower = s_upper - Config_.FLAGS_default_lon_buffer;
+    double s_lower = s_upper - Config_.FLAGS_default_lon_buffer;// 5
     // CHECK_GE(FLAGS_num_sample_follow_per_timestamp, 2);
 
     double s_gap = Config_.FLAGS_default_lon_buffer /
-                   static_cast<double>(Config_.FLAGS_num_sample_follow_per_timestamp - 1);
+                   static_cast<double>(Config_.FLAGS_num_sample_follow_per_timestamp - 1);// 3
 
     // 三个点，从s_lower开始，包括s_lower,每隔 s_gap m取一个点
     for (size_t i = 0; i < Config_.FLAGS_num_sample_follow_per_timestamp; ++i)

@@ -1,7 +1,9 @@
 #include "lqr_control.h"
 
+namespace dust {
+namespace control {
 
-lqrControl::lqrControl(const double kp, const double ki, const double kd) : control(kp,ki,kd)
+lqrControl::lqrControl(const double kp, const double ki, const double kd) : controller(kp,ki,kd)
 {
     // 纵向速度
     vx = 0.1;
@@ -242,3 +244,6 @@ double lqrControl::cal_angle(Eigen::Matrix<double, 1, 4> k, double forword_angle
     }
     return angle;
 }
+
+} // control
+} // dust

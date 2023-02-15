@@ -5,11 +5,11 @@ default_cruise_speed: 15   #  最大巡航速度, Lattice:1.5， EM：1.5
 FLAGS_default_reference_line_width: 5.0    # 道路的宽度
 
 # cost
-FLAGS_trajectory_time_resolution: 0.05       #  Trajectory time resolution in planning
+FLAGS_trajectory_time_resolution: 0.1       #  Trajectory time resolution in planning
 FLAGS_weight_target_speed: 1.0              #  Weight of target speed cost
 FLAGS_weight_dist_travelled: 10.0           #  Weight of travelled distance cost
-FLAGS_longitudinal_jerk_lower_bound: -0.1   #  The lower bound of longitudinal jerk.
-FLAGS_longitudinal_jerk_upper_bound: 0.1    #  The upper bound of longitudinal jerk
+FLAGS_longitudinal_jerk_lower_bound: -4.0   #  The lower bound of longitudinal jerk.
+FLAGS_longitudinal_jerk_upper_bound: 4.0    #  The upper bound of longitudinal jerk
 FLAGS_lon_collision_cost_std: 0.5           #  The standard deviation of longitudinal collision cost function
 FLAGS_lon_collision_yield_buffer: 1.0       #  Longitudinal collision buffer for yield
 FLAGS_lon_collision_overtake_buffer: 5.0    #  Longitudinal collision buffer for overtake
@@ -29,8 +29,8 @@ FLAGS_weight_same_side_offset: 1.0       # Weight of same side lateral offset co
 
 FLAGS_speed_lower_bound: -0.1                       # The lowest speed allowed
 FLAGS_speed_upper_bound: 50                         # The highest speed allowed  Lattice专用
-FLAGS_longitudinal_acceleration_lower_bound: -0.5   # The lowest longitudinal acceleration allowed
-FLAGS_longitudinal_acceleration_upper_bound: 0.5      # The highest longitudinal acceleration allowed
+FLAGS_longitudinal_acceleration_lower_bound: -4.5   # The lowest longitudinal acceleration allowed
+FLAGS_longitudinal_acceleration_upper_bound: 4.0      # The highest longitudinal acceleration allowed
 FLAGS_comfort_acceleration_factor: 0.5              # Factor for comfort acceleration
 FLAGS_Max_curvature: 0.2                            # 轨迹的最大曲率
 FLAGS_kappa_bound: 0.10 
@@ -39,7 +39,7 @@ FLAGS_lateral_acceleration_bound: 4.0
 FLAGS_lateral_jerk_bound: 4.0
 
  # 纵向规划
-FLAGS_trajectory_time_length: 8.0      # 最大预测时间 [s]，8s
+FLAGS_trajectory_time_length: 8.0      # 轨迹时间 [s]，8s
 FLAGS_polynomial_minimal_param: 0.01   # Minimal time parameter in polynomials
 FLAGS_num_velocity_sample: 6           # The number of velocity samples in end condition sampler
 FLAGS_min_velocity_sample_gap: 1.0     # Minimal sampling gap for velocity
@@ -78,7 +78,7 @@ FLAGS_num_sample_follow_per_timestamp: 3  #  "The number of sample points for ea
 FLAGS_vehicle_width: 1.8
 FLAGS_vehicle_length: 4.8
 # 改车的长度宽度之后，下面4个一定要改
-front_edge_to_center: 2.34
+front_edge_to_center: 2.34 #3.89
 back_edge_to_center: 2.46  # 车尾到非几何中心的距离
 left_edge_to_center: 0.9
 right_edge_to_center: 0.9

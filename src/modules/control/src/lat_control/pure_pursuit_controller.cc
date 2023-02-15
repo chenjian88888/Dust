@@ -1,17 +1,10 @@
 #include "pure_pursuit_controller.h"
 
+namespace dust {
+namespace control {
 
-purePursuit::purePursuit(){
-	ROS_INFO("pure pursuit start");
-}
+purePursuit::purePursuit(const double kp, const double ki, const double kd) : controller(kp,ki,kd) { }
 
-
-
-
-void purePursuit::run(){
-	
-	
-}
 
 double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
 	
@@ -54,7 +47,7 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 	double ld = sqrt(pow(targetPath[forwardIndex].y - y, 2) +
 		pow(targetPath[forwardIndex].x - x, 2)); // distance 
 	double steer = -atan2(2. * (2.85) * sin(deltaAlfa), ld) * 36 / (7 * M_PI);
-	std::cout << "velocity: " << velocity << "  steer: " << steer << std::endl;
+	std::cout << "  steer: " << steer << std::endl;
 	// if (steer > 135) {
 	// 	steer = 135;
 	// }
@@ -63,3 +56,6 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 	// }
 	return steer;
 }
+
+} // control
+} // dust

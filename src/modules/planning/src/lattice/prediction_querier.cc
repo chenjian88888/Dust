@@ -98,6 +98,6 @@ double PredictionQuerier::ProjectVelocityAlongReferenceLine(
     PathPoint obstacle_point_on_ref_line = PathMatcher::MatchToPath(*ptr_reference_line_, s);
     auto ref_theta = obstacle_point_on_ref_line.theta; // 这个theta是参考线在该s下的heading
 
-    // 叉乘，速度投影到参考线上
+    // 点乘，速度投影到参考线上
     return std::cos(ref_theta) * v_x + std::sin(ref_theta) * v_y;
 }

@@ -1,7 +1,9 @@
 #include <ros/ros.h>
 #include "controller.h"
+#include "lqr_control.h"
+#include "pure_pursuit_controller.h"
 
-using namespace dust::contorl;
+using namespace dust::control;
 
 int which_controllers;
 std::shared_ptr<controller> control_base;
@@ -27,20 +29,21 @@ int main(int argc, char **argv) {
 
     // ros parameter settings
     ros::param::get("which_controllers", which_controllers);
+
     ROS_INFO("which_controllers = %d",which_controllers);
     switch (which_controllers)
     {
       case 0:
         std::cout << "lqr init!!!" << std::endl;
-        control_base = std::make_shared<lqrControl>();
+        control_base = std::make_shared<lqrControl>(0.1,0.06,0.0);
         break;
       case 1:
         std::cout << "pure_pursuit init!!!" << std::endl;
-        control_base = std::make_shared<purePursuit>();
+        control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
         break;
       default:
         std::cout << "default:pure_pursuit init!!!" << std::endl;
-        control_base = std::make_shared<purePursuit>();
+        control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
         break;
     }
 
@@ -59,8 +62,8 @@ int main(int argc, char **argv) {
     {
       // 先订阅到消息才可以发布 
       if (targetPath_.size() > 0) {
-        double steer = control_base.calculateCmd(targetPath_, gps_);
-        double speed = control_base.calculateThrottleBreak(targetPath_, gps_);
+        double steer = control_base->calculateCmd(targetPath_, gps_);
+        double speed = control_base->calculateThrottleBreak(targetPath_, gps_);
         
         geometry_msgs::Pose tempPose;
         tempPose.position.x = steer;
