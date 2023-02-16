@@ -106,6 +106,7 @@ double TrajectoryEvaluator::Evaluate(const PlanningTarget &planning_target,
   double centripetal_acc_cost = CentripetalAccelerationCost(lon_trajectory);
 
   // decides the longitudinal evaluation horizon for lateral trajectories.
+  // 参数是纵向轨迹s，我们在评估或者计算cost的时候，我们需要把纵向轨迹s进行细分，s也需要一个步长，此处的步长是1m
   double evaluation_horizon = std::min(Config_.FLAGS_speed_lon_decision_horizon, lon_trajectory->Evaluate(0, lon_trajectory->ParamLength()));
   std::vector<double> s_values;
   for (double s = 0.0; s < evaluation_horizon; s += Config_.FLAGS_trajectory_space_resolution)
@@ -179,13 +180,13 @@ double TrajectoryEvaluator::LonComfortCost(
     // 每个时刻的jerk
     double jerk = lon_trajectory->Evaluate(3, t);
     // jerk_t/2
-    double cost = jerk / Config_.FLAGS_longitudinal_jerk_upper_bound; // 2.0
+    double cost = jerk / Config_.FLAGS_longitudinal_jerk_upper_bound; // 4.0 希望总和小于1
     // sum_0_to_length(jerk_t/2)^2
     cost_sqr_sum += cost * cost;
     // sum_0_to_length(|jerk_t/2|)
     cost_abs_sum += std::fabs(cost);
   }
-  // Cost_jerk
+  // Cost_jerk如果jerk>4那么这个代价会大于1越来越大，反之相反
   return cost_sqr_sum / (cost_abs_sum + Config_.FLAGS_numerical_epsilon);
 }
 
@@ -208,13 +209,14 @@ double TrajectoryEvaluator::LonCollisionCost(
     }
     double t = static_cast<double>(i) * Config_.FLAGS_trajectory_time_resolution;
     // 当前时间点的s
-    double traj_s = lon_trajectory->Evaluate(0, t);
+    double traj_s = lon_trajectory->Evaluate(0, t);// 本车的位置
     double sigma = Config_.FLAGS_lon_collision_cost_std; // 0.5
     // 遍历当前时间点下,所有障碍物(即对应的s_lower和s_upper)
     for (const auto &m : pt_interval)
     {
       double dist = 0.0;
       // 如果 当前障碍物的s_lower减去一个lon_collision_yield_buffer 大于 当前t对应的自车s
+      // m.first当前车距离障碍物最近的距离，m.second最远距离？？？没太看懂
       if (traj_s < m.first - Config_.FLAGS_lon_collision_yield_buffer)
       { // 1.0
         // 当前障碍物的s_lower减去一个lon_collision_yield_buffer 与自车 的差值

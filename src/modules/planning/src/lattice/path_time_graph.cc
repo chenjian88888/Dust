@@ -32,7 +32,7 @@ std::vector<std::vector<std::pair<double, double>>> PathTimeGraph::GetPathBlocki
                                                                                             const double t_resolution)
 {
   // 每个时刻，每个障碍物的s_lower, s_upper
-  // 两层vector嵌套，最里边表示同一时间所有障碍物的信息
+  // 两层vector嵌套，最里边表示同一时间所有障碍物的最大和最小的S
   // 最外边表示所有时间障碍物的信息
   std::vector<std::vector<std::pair<double, double>>> intervals;
   for (double t = t_start; t <= t_end; t += t_resolution)

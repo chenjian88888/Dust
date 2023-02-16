@@ -22,7 +22,7 @@ FLAGS_weight_lat_offset: 2.0    #  Weight of lateral offset cost
 FLAGS_weight_lat_comfort: 2.0  #  Weight of lateral comfort cost
 
 FLAGS_speed_lon_decision_horizon: 50     # Longitudinal horizon for speed decision making (meter)
-FLAGS_trajectory_space_resolution: 0.4   # Trajectory space resolution in planning
+FLAGS_trajectory_space_resolution: 1.0   # Trajectory space resolution in planning
 FLAGS_lat_offset_bound: 3.0              # The bound of lateral offset
 FLAGS_weight_opposite_side_offset: 10    # Weight of opposite side lateral offset cost
 FLAGS_weight_same_side_offset: 1.0       # Weight of same side lateral offset cost
