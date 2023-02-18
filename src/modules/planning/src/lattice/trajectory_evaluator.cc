@@ -44,7 +44,7 @@ TrajectoryEvaluator::TrajectoryEvaluator(
         //通过优先级队列筛选最小cost的轨迹
         double cost = Evaluate(planning_target, lon_trajectory, lat_trajectory);
 
-        cost_queue_.emplace(Trajectory1dPair(lon_trajectory, lat_trajectory), cost);
+        cost_queue_.emplace(Trajectory1dPair(lon_trajectory, lat_trajectory), cost);// 从大到小排序
       }
     }
     std::cout << "size:" << lat_trajectories.size() << std::endl;
@@ -126,12 +126,12 @@ double TrajectoryEvaluator::Evaluate(const PlanningTarget &planning_target,
   // std::cout << "lat_offset_cost:" << lat_offset_cost << std::endl;
   // std::cout << "lat_comfort_cost:" << lat_comfort_cost << std::endl;
 
-  return lon_objective_cost * Config_.FLAGS_weight_lon_objective +
-         lon_jerk_cost * Config_.FLAGS_weight_lon_jerk +
-         lon_collision_cost * Config_.FLAGS_weight_lon_collision +
-         centripetal_acc_cost * Config_.FLAGS_weight_centripetal_acceleration +
-         lat_offset_cost * Config_.FLAGS_weight_lat_offset +
-         lat_comfort_cost * Config_.FLAGS_weight_lat_comfort;
+  return lon_objective_cost * Config_.FLAGS_weight_lon_objective +// 10
+         lon_jerk_cost * Config_.FLAGS_weight_lon_jerk + // 1
+         lon_collision_cost * Config_.FLAGS_weight_lon_collision + // 3
+         centripetal_acc_cost * Config_.FLAGS_weight_centripetal_acceleration + // 1.5
+         lat_offset_cost * Config_.FLAGS_weight_lat_offset + // 2.0
+         lat_comfort_cost * Config_.FLAGS_weight_lat_comfort; // 2.0
 }
 
 // 1.LonObjectiveCost

@@ -19,7 +19,9 @@ referenceLine::referenceLine(){
 
     // publisher
     trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 10);        //发布局部轨迹
-    rviz_pub_ = n_.advertise<nav_msgs::Path>("/rviz_trajectory_waypoints", 10);        //发布局部轨迹
+    rviz_pub_ = n_.advertise<nav_msgs::Path>("/rviz_trajectory_waypoints", 10);              //发布局部轨迹
+    rviz_obstacle_pub_ = n_.advertise<visualization_msgs::MarkerArray>("/rviz_obstacles", 10); 
+    // reference_smoothed_pub_ = n_.advertise<nav_msgs::Path>("/reference_smoothed", 10);
 
     ROS_INFO("which_planners = %i",which_planners);
     switch (which_planners)
@@ -61,23 +63,62 @@ void referenceLine::gpsCallback(const msg_gen::gps &pGps){
   gps_flag_ = {1};
 }
 
+// 非referenceLine成员函数
+// 已知顶点和中心点，将任何障碍物变成方形的二维平面，计算长和宽,并存储于Marker
+void Turn_obstacles_into_squares(visualization_msgs::Marker &marker,
+                                               const Obstacle *Primitive_obstacle, const int id)
+{
+  marker.pose.orientation = tf::createQuaternionMsgFromYaw(Primitive_obstacle->obstacle_theta);
+  marker.header.frame_id = "world";
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "basic_shapes";
+  marker.id = id;
+  marker.type = visualization_msgs::Marker::CUBE;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = Primitive_obstacle->centerpoint.position.x;
+  marker.pose.position.y = Primitive_obstacle->centerpoint.position.y;
+  marker.pose.position.z = 0;
+  marker.scale.x = Primitive_obstacle->obstacle_length;
+  marker.scale.y = Primitive_obstacle->obstacle_width;
+  marker.scale.z = Primitive_obstacle->obstacle_height;
+  marker.color.r = 255.0f;
+  marker.color.g = 140.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 1.0;
+  marker.lifetime = ros::Duration();
+}
+
 void  referenceLine::run() {
     // 订阅障碍物
-    Obstacle ob(true); // 实例化类，构造函数订阅障碍物    
+    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
 
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
         if (referenceline_.poses.size() > 0)
         {
-            // referenceLine_pub_.publish(referenceline_);
-            referencePointsCalc(referenceline_);// 计算参考点的kappa、theta，添加flag确保只计算一次，减少重复计算
+          // reference_smoothed_pub_.publish(referenceline_);
+          // referenceLine_pub_.publish(referenceline_);
+          referencePointsCalc(referenceline_); // 计算参考点的kappa、theta，添加flag确保只计算一次，减少重复计算
         }
 
         // 障碍物存储
         std::vector<const Obstacle *> obstacles; // Apollo是这种类型
         for (size_t i = 0; i < AllObstacle.size(); i++){
           obstacles.emplace_back(&AllObstacle[i]);
+        }
+
+        // 障碍物发布rviz
+        if (obstacles.size() > 0)
+        {
+          visualization_msgs::MarkerArray obstacle_MarkerArray;
+          for (int i = 0; i < obstacles.size(); ++i)
+          {
+            visualization_msgs::Marker marker;
+            Turn_obstacles_into_squares(marker, obstacles[i], i);
+            obstacle_MarkerArray.markers.push_back(marker);
+            rviz_obstacle_pub_.publish(obstacle_MarkerArray);
+          }
         }
 
         // 确保gps和reference_points收到数据之后再进行
@@ -114,8 +155,8 @@ void  referenceLine::run() {
           std::cout << "lattice_ic_x = " << lattice_ic_.x_init << " lattice_ic_y = " << lattice_ic_.y_init << std::endl;
           TrajectoryPoint planning_init_point(lattice_ic_);
           // 轨迹生成
-          // PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
-          PlanningTarget planning_target(10, accumulated_s); // 目标 km/h
+          PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
+          // PlanningTarget planning_target(10, accumulated_s); // 目标 km/h
           lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
           best_path_ = planning_base_->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
                       FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
@@ -145,7 +186,6 @@ void  referenceLine::run() {
             msg_gen::TrajectoryPoint TrajectoryPoint_d;
             TrajectoryPoint_d.x = final_trajectory_[i].x;
             TrajectoryPoint_d.y = final_trajectory_[i].y;
-            std::cout << "x_" << i << " = " << final_trajectory_[i].x << " y_" << i << " = " << final_trajectory_[i].y<< std::endl;
             TrajectoryPoint_d.z = final_trajectory_[i].z;
             TrajectoryPoint_d.theta = final_trajectory_[i].theta;
             TrajectoryPoint_d.kappa = final_trajectory_[i].kappa;
@@ -165,7 +205,6 @@ void  referenceLine::run() {
             TrajectoryPoint_d.d_ddd = final_trajectory_[i].d_ddd;
             trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
           }
-          ROS_INFO("trajectory_d.size %d", trajectory_d.pointsize);
 
           traj_points_.poses.clear();
           traj_points_.header.frame_id = "world";

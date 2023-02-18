@@ -2,7 +2,7 @@
 #define __PURE_PURSUIT__
 
 #pragma once
-#include "controller.h"
+#include "metaController.h"
 
 namespace dust {
 namespace control {

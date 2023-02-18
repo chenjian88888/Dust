@@ -58,7 +58,7 @@ void Trajectory1dGenerator::GenerateLateralTrajectoryBundle(Trajectory1DBundle *
   {
     auto end_conditions = end_condition_sampler_.SampleLatEndConditions();
     // Use the common function to generate trajectory bundles.
-    GenerateTrajectory1DBundle<5>(init_lat_state_, end_conditions, ptr_lat_trajectory_bundle);
+    GenerateTrajectory1DBundle<5>(init_lat_state_, end_conditions, ptr_lat_trajectory_bundle);// end_conditions[0].second是s，自变量，这里为什么要ptr_trajectory1d->set_target_time(end_condition.second);什么意思呢？
   }
   else //二次规划osqp对比着学
   {
@@ -89,7 +89,7 @@ void Trajectory1dGenerator::GenerateLateralTrajectoryBundle(Trajectory1DBundle *
 void Trajectory1dGenerator::GenerateSpeedProfilesForCruising(const double target_speed,
                                                              Trajectory1DBundle *ptr_lon_trajectory_bundle) const
 {
-  ROS_INFO("cruise speed is %d", target_speed);
+  ROS_INFO("cruise speed is %f", target_speed);
   auto end_conditions = end_condition_sampler_.SampleLonEndConditionsForCruising(target_speed);
   if (end_conditions.empty())
   {

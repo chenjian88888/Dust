@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <launch> 
 
-    <!-- 控制的方式选择: 0:lattice  1:emplanner-->
-    <arg name="which_planner" value="0"/>    
-    <param name="which_planners" value="$(arg which_planner)"/>
+    <!-- 控制的方式选择: 0:lqr  1:pure_pursuit-->
+    <arg name="which_controller" value="0"/>    
+    <param name="which_controllers" value="$(arg which_controller)"/>
 
     
 
     <!-- ui界面 -->        
     <!-- <node pkg="ui_console" type="ui_console" name="interface_console" output="screen" /> -->
      <!-- 全局规划 -->
-    <node pkg="planning" type="planning_node" name="planning" output="screen" />
-    <param name="use_sim_time" value="false"/>
+    <!-- <node pkg="planning" type="planning_node" name="planning" output="screen" />
+    <param name="use_sim_time" value="false"/> -->
      <!-- 控制 -->
-    <node pkg="planning" type="planning_node" name="planning" output="screen" />
+    <node pkg="control" type="control_node" name="controller" output="screen" />
     <param name="use_sim_time" value="false"/>
      <!-- rviz -->
     <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find global_routing)/config/planning_demo.rviz"/> -->

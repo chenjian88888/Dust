@@ -1,8 +1,8 @@
 #----------------------------------调整参数不用再编译，直接roslaunch运行----------------------------------------#
 
-default_cruise_speed: 15   #  最大巡航速度, Lattice:1.5， EM：1.5
+default_cruise_speed: 11   #  最大巡航速度, Lattice:1.5， EM：1.5
 
-FLAGS_default_reference_line_width: 5.0    # 道路的宽度
+FLAGS_default_reference_line_width: 10.0    # 道路的宽度
 
 # cost
 FLAGS_trajectory_time_resolution: 0.1       #  Trajectory time resolution in planning

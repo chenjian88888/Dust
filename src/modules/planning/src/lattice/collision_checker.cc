@@ -69,6 +69,7 @@ void CollisionChecker::BuildPredictedEnvironment(const std::vector<const Obstacl
         (IsObstacleBehindEgoVehicle(obstacle, ego_vehicle_s, discretized_reference_line) ||
          !ptr_path_time_graph_->IsObstacleInGraph(obstacle->obstacle_id)))
     {
+      // 在同一个车道内，要么在主车后面要么不在ST图中
       continue;
     }
 
@@ -87,14 +88,6 @@ void CollisionChecker::BuildPredictedEnvironment(const std::vector<const Obstacl
       // Obstacle::GetPointAtTime has handled this case.
       TrajectoryPoint point = obstacle->GetPointAtTime(relative_time);
       Box2d box = obstacle->GetBoundingBox(point);
-
-      std::cout << "box obstacle: " << obstacle->obstacle_id
-                << ", x: " << box.center_x()
-                << ", y: " << box.center_y()
-                << ", l: " << box.length()
-                << ", w: " << box.width()
-                << ", h:" << box.heading()
-                << "\n";
       /*
         障碍物膨胀不难理解，为了安全，人在开车的过程中也会适当的远离附近车辆，
         但是这个膨胀方法显然太过死板了，或许百度内部早就优化了，
@@ -113,7 +106,6 @@ void CollisionChecker::BuildPredictedEnvironment(const std::vector<const Obstacl
         box.LateralExtend(2.0 * Config_.FLAGS_lat_collision_buffer);
       }
       predicted_env.push_back(std::move(box));
-      predicted_env.push_back(std::move(box));
     }
 
     predicted_bounding_rectangles_.push_back(std::move(predicted_env));
@@ -125,7 +117,7 @@ bool CollisionChecker::IsEgoVehicleInLane(const double ego_vehicle_s,
                                           const double ego_vehicle_d)
 {
   //道路宽度定了
-  double left_width = Config_.FLAGS_default_reference_line_width * 0.5;
+  double left_width = Config_.FLAGS_default_reference_line_width * 0.5;// 5
   double right_width = Config_.FLAGS_default_reference_line_width * 0.5;
 
   // 跟据你当前自车的s值,来返回你距离左车道线的宽度和右车道线的宽度

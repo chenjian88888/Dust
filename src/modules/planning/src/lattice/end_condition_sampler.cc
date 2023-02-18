@@ -13,7 +13,7 @@ std::vector<Condition> EndConditionSampler::SampleLatEndConditions() const
 {
   std::vector<Condition> end_d_conditions;
   // std::array<double, 9> end_d_candidates = {-1.25, -1, -0.75, -0.5, 0, 0.5, 0.75, 1, 1.25};
-  std::array<double, 5> end_d_candidates = {-2.0, -1.0, 0, 1.0, 2.0};
+  std::array<double, 5> end_d_candidates = {-3.0, -1.5, 0, 1.5, 3.0};
   std::array<double, 4> end_s_candidates = {10.0, 20.0, 40.0, 80.0};
   // std::array<double, 6> end_s_candidates = {5, 10, 15, 20, 25, 30}; //低速
   for (const auto &s : end_s_candidates)

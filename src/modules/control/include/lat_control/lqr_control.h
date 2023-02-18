@@ -2,7 +2,7 @@
 #define __LQR_CONTROL__
 
 #pragma once
-#include "controller.h"
+#include "metaController.h"
 
 namespace dust{
 namespace control{
@@ -21,7 +21,7 @@ public:
 
     // 计算误差 ed ed' ephi ephi'
     std::array<double, 5> cal_err_k(const std::vector<std::pair<double, double>>& trj_point_array, std::vector<double>& trj_thetas, 
-        std::vector<double>& trj_kappas, double current_post_x, double current_post_y, double car_yaw, int index);
+        std::vector<double>& trj_kappas, double current_post_x, double current_post_y, double car_yaw, int &index);
 
     // 计算lqr的k1 k2 k3 k4
     Eigen::Matrix<double, 1, 4> cal_k(std::array<double, 5> err_k);

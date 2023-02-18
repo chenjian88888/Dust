@@ -46,7 +46,7 @@ double purePursuit::calculateCmd(const std::vector<RefPoint>& targetPath, const 
 		targetPath[forwardIndex].x - x) - psi;// alfa
 	double ld = sqrt(pow(targetPath[forwardIndex].y - y, 2) +
 		pow(targetPath[forwardIndex].x - x, 2)); // distance 
-	double steer = -atan2(2. * (2.85) * sin(deltaAlfa), ld) * 36 / (7 * M_PI);
+	double steer = atan2(2. * (2.85) * sin(deltaAlfa), ld) * 180 / (M_PI);
 	std::cout << "  steer: " << steer << std::endl;
 	// if (steer > 135) {
 	// 	steer = 135;

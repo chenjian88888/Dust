@@ -143,7 +143,7 @@ private:
 	// handle
 	ros::NodeHandle n_;
 	// publisher
-  	ros::Publisher trajectory_pub_, rviz_pub_;
+  	ros::Publisher trajectory_pub_, rviz_pub_, rviz_obstacle_pub_, reference_smoothed_pub_;
   	// subscriber
   	ros::Subscriber routing_sub_, gps_sub_;
     

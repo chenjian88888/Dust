@@ -75,8 +75,10 @@ DiscretizedTrajectory lattice::plan(
   // 4.计算每条轨迹的代价,并得出优先级队列
   TrajectoryEvaluator trajectory_evaluator(planning_target, lon_trajectory1d_bundle, lat_trajectory1d_bundle,
                                            init_s, ptr_path_time_graph, reference_points);
+  // Get instance of collision checker and constraint checker
+  CollisionChecker collision_checker(obstacles, init_s[0], init_d[0], reference_points, ptr_path_time_graph);
 
-  // 5.轨迹拼接和最后的筛选
+  // 5.轨迹拼接和最后的筛选，总是得到结合的最好的轨迹对，返回第一次无碰撞的轨迹
   while (trajectory_evaluator.has_more_trajectory_pairs())
   {
     double trajectory_pair_cost = trajectory_evaluator.top_trajectory_pair_cost();
@@ -114,8 +116,7 @@ DiscretizedTrajectory lattice::plan(
         }
         continue;
       }
-      // Get instance of collision checker and constraint checker
-      CollisionChecker collision_checker(obstacles, init_s[0], init_d[0], reference_points, ptr_path_time_graph);
+      
       //碰撞检测
       if (collision_checker.InCollision(combined_trajectory))
       {

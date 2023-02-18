@@ -1,4 +1,4 @@
-#include "controller.h"
+#include "metaController.h"
 
 namespace dust {
 namespace control {
@@ -25,6 +25,10 @@ double controller::calculateThrottleBreak(const std::vector<RefPoint>& targetPat
 			index = i;
 		}
 	}
+	if (index<targetPath.size()-3){
+		index = index + 3;
+	}
+	std::cout << "target_speed: " << targetPath[index].speed << "  now_speed: " << std::sqrt(pow(gps.velX, 2) + pow(gps.velY, 2) + pow(gps.velZ, 2)) << "\n";
 
 	return PID_Control(targetPath[index].speed, std::sqrt(pow(gps.velX,2)+pow(gps.velY,2)+pow(gps.velZ,2)));
 }
