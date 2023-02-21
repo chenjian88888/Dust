@@ -8,6 +8,7 @@
 
 #include<iostream>
 #include <deque>
+#include <boost/thread.hpp>
 
 using namespace dust::control;
 
@@ -19,7 +20,8 @@ msg_gen::gps gps_;
 void routingCallback(const msg_gen::trajectory &routing){
 	// 确保一开始只订阅一次
 	std::cout << "routing.size: " << routing.pointsize << " targetPath_.size: " << targetPath_.size() << std::endl;
-	targetPath_.resize(routing.pointsize);
+  targetPath_.clear();
+  targetPath_.resize(routing.pointsize);
 	for (int i = 0; i < routing.pointsize; ++i)
 	{
 		targetPath_[i] = {routing.trajectorypoint[i].x, routing.trajectorypoint[i].y, routing.trajectorypoint[i].kappa, routing.trajectorypoint[i].theta, routing.trajectorypoint[i].v};
@@ -92,64 +94,73 @@ void gpsCallback(const msg_gen::gps &pGps){
 	gps_ = pGps;
 }
 
+void control_thread(){
+  ros::NodeHandle n_;
+  // ros sub
+  ros::Subscriber planning_sub = n_.subscribe("/trajectory_waypoints", 10, routingCallback);
+  // ros::Subscriber planning_sub = n_.subscribe("/reference_smoothed", 10, routingCallback);
+
+  ros::Subscriber gps_sub = n_.subscribe("/gps", 10, gpsCallback);
+  // ros pub
+  ros::Publisher control_pub = n_.advertise<geometry_msgs::Pose>("/control", 10);
+  ros::Publisher point_pub = n_.advertise<geometry_msgs::PointStamped>("/vehicle_gps",10);                // 发布车辆定位
+  
+
+  ros::Rate loop_rate(100);
+  while (ros::ok())
+  {
+    // 发布车辆定位
+    geometry_msgs::PointStamped this_point_stamped;
+    this_point_stamped.header.stamp = ros::Time::now();
+    this_point_stamped.header.frame_id = "world";
+    this_point_stamped.point.x = gps_.posX;
+    this_point_stamped.point.y = gps_.posY;
+    this_point_stamped.point.z = gps_.posZ;
+    point_pub.publish(this_point_stamped);
+
+    // 先订阅到消息才可以发布 
+    if (targetPath_.size() > 0) {
+      double steer = control_base->calculateCmd(targetPath_, gps_);
+      double speed = control_base->calculateThrottleBreak(targetPath_, gps_);
+      
+      geometry_msgs::Pose tempPose;
+      tempPose.position.x = steer;
+      tempPose.position.y = speed;
+      control_pub.publish(tempPose);
+    }
+
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+}
+
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "control");
+  ros::init(argc, argv, "control");
 
-    // ros parameter settings
-    ros::param::get("which_controllers", which_controllers);
+  // ros parameter settings
+  ros::param::get("which_controllers", which_controllers);
 
-    ROS_INFO("which_controllers = %d",which_controllers);
-    switch (which_controllers)
-    {
-      case 0:
-        std::cout << "lqr init!!!" << std::endl;
-        control_base = std::make_shared<lqrControl>(0.1,0.06,0.0);
-        break;
-      case 1:
-        std::cout << "pure_pursuit init!!!" << std::endl;
-        control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
-        break;
-      default:
-        std::cout << "default:pure_pursuit init!!!" << std::endl;
-        control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
-        break;
-    }
+  ROS_INFO("which_controllers = %d",which_controllers);
+  switch (which_controllers)
+  {
+    case 0:
+      std::cout << "lqr init!!!" << std::endl;
+      control_base = std::make_shared<lqrControl>(0.1,0.06,0.0);
+      break;
+    case 1:
+      std::cout << "pure_pursuit init!!!" << std::endl;
+      control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
+      break;
+    default:
+      std::cout << "default:pure_pursuit init!!!" << std::endl;
+      control_base = std::make_shared<purePursuit>(0.1,0.06,0.0);
+      break;
+  }
 
-    ros::NodeHandle n_;
-    // ros sub
-    ros::Subscriber planning_sub = n_.subscribe("/trajectory_waypoints", 10, routingCallback);
-    // ros::Subscriber planning_sub = n_.subscribe("/reference_smoothed", 10, routingCallback);
-
-    ros::Subscriber gps_sub = n_.subscribe("/gps", 10, gpsCallback);
-
-    // ros pub
-    ros::Publisher control_pub = n_.advertise<geometry_msgs::Pose>("/control", 10);
-    ros::Publisher point_pub = n_.advertise<geometry_msgs::PointStamped>("/vehicle_gps",10);                // 发布车辆定位
-
-    ros::Rate loop_rate(100);
-    while (ros::ok())
-    {
-      // 发布车辆定位
-      geometry_msgs::PointStamped this_point_stamped;
-      this_point_stamped.header.stamp = ros::Time::now();
-      this_point_stamped.header.frame_id = "world";
-      this_point_stamped.point.x = gps_.posX;
-      this_point_stamped.point.y = gps_.posY;
-      this_point_stamped.point.z = gps_.posZ;
-      point_pub.publish(this_point_stamped);
-
-      // 先订阅到消息才可以发布 
-      if (targetPath_.size() > 0) {
-        double steer = control_base->calculateCmd(targetPath_, gps_);
-        double speed = control_base->calculateThrottleBreak(targetPath_, gps_);
-        
-        geometry_msgs::Pose tempPose;
-        tempPose.position.x = steer;
-        tempPose.position.y = speed;
-        control_pub.publish(tempPose);
-      }
-
-      ros::spinOnce();
-      loop_rate.sleep();
-    }
+  boost::thread *control_thread_ = new boost::thread(boost::bind(&control_thread));
+  while (ros::ok())
+  {
+    /* code */
+  }
+  delete control_thread_;
 }

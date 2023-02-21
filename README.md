@@ -13,3 +13,4 @@ planning.cc
 5. 问题
 1.静态障碍物car的sl boundary怎么算的？
 obstacle->polygon_points
+2.planning节点在运行后频率大约在10hz，但是一旦启动control节点频率就会直线下降，这是为啥？

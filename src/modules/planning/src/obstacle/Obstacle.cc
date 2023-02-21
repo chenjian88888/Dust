@@ -37,7 +37,6 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
   /*---------------------------------------获取障碍物信息----------------------------------------*/
   if (msgs->obstacleSize > 0) //如果感知有识别到障碍物
   {
-    ROS_INFO("sub ground_truth callback");
     AllObstacle.clear(); //每次接受障碍物的时候，清空，更新
     //存到AllObstacle
     for (size_t i = 0; i < msgs->obstacleSize; ++i)
@@ -60,7 +59,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
       obs.obstacle_velocity = msgs->obstacle[i].velX;
       if (obs.obstacle_velocity > 0.2) //动态障碍物
       {
-        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 5, obs.obstacle_theta, obs.obstacle_velocity);
+        Prediction::Ob_Trajectory ob_tray = oba.Generater_Trajectory(obs.centerpoint, 4, obs.obstacle_theta, obs.obstacle_velocity);
         obs.SetTrajectory(ob_tray);
       }
 

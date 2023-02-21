@@ -10,4 +10,9 @@ int main(int argc, char **argv)
     ROS_INFO("planning start");
     referenceLine rl;
     rl.run();
+    while (ros::ok)
+    {
+        /* code */
+    }
+    
 }

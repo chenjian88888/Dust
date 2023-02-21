@@ -97,20 +97,20 @@ DiscretizedTrajectory lattice::plan(
       {
         switch (result)
         {
-        case ConstraintChecker::Result::LON_VELOCITY_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::LON_ACCELERATION_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::LON_JERK_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::CURVATURE_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::LAT_ACCELERATION_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::LAT_JERK_OUT_OF_BOUND:
-          break;
-        case ConstraintChecker::Result::VALID:
-        default:
+          case ConstraintChecker::Result::LON_VELOCITY_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::LON_ACCELERATION_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::LON_JERK_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::CURVATURE_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::LAT_ACCELERATION_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::LAT_JERK_OUT_OF_BOUND:
+            break;
+          case ConstraintChecker::Result::VALID:
+          default:
           // Intentional empty
           break;
         }

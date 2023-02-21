@@ -18,8 +18,8 @@ referenceLine::referenceLine(){
     gps_sub_ = n_.subscribe("/gps", 10, &referenceLine::gpsCallback, this);
 
     // publisher
-    trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 10);        //发布局部轨迹
-    rviz_pub_ = n_.advertise<nav_msgs::Path>("/rviz_trajectory_waypoints", 10);              //发布局部轨迹
+    trajectory_pub_ = n_.advertise<msg_gen::trajectory>("/trajectory_waypoints", 1);        //发布局部轨迹
+    rviz_pub_ = n_.advertise<nav_msgs::Path>("/rviz_trajectory_waypoints", 1);              //发布局部轨迹
     rviz_obstacle_pub_ = n_.advertise<visualization_msgs::MarkerArray>("/rviz_obstacles", 10); 
     // reference_smoothed_pub_ = n_.advertise<nav_msgs::Path>("/reference_smoothed", 10);
 
@@ -39,6 +39,11 @@ referenceLine::referenceLine(){
         break;
     }
     
+    
+}
+
+referenceLine::~referenceLine(){
+  delete referenceLine_thread_;
 }
 
 void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
@@ -89,170 +94,179 @@ void Turn_obstacles_into_squares(visualization_msgs::Marker &marker,
 }
 
 void  referenceLine::run() {
-    // 订阅障碍物
-    Obstacle ob(true); // 实例化类，构造函数订阅障碍物
-
-    ros::Rate loop_rate(10);
-    while (ros::ok())
-    {
-        if (referenceline_.poses.size() > 0)
-        {
-          // reference_smoothed_pub_.publish(referenceline_);
-          // referenceLine_pub_.publish(referenceline_);
-          referencePointsCalc(referenceline_); // 计算参考点的kappa、theta，添加flag确保只计算一次，减少重复计算
-        }
-
-        // 障碍物存储
-        std::vector<const Obstacle *> obstacles; // Apollo是这种类型
-        for (size_t i = 0; i < AllObstacle.size(); i++){
-          obstacles.emplace_back(&AllObstacle[i]);
-        }
-
-        // 障碍物发布rviz
-        if (obstacles.size() > 0)
-        {
-          visualization_msgs::MarkerArray obstacle_MarkerArray;
-          for (int i = 0; i < obstacles.size(); ++i)
-          {
-            visualization_msgs::Marker marker;
-            Turn_obstacles_into_squares(marker, obstacles[i], i);
-            obstacle_MarkerArray.markers.push_back(marker);
-            rviz_obstacle_pub_.publish(obstacle_MarkerArray);
-          }
-        }
-
-        // 确保gps和reference_points收到数据之后再进行
-        if (reference_points.size() > 0 && gps_flag_.size() > 0)
-        {
-          pre_trajectory_ = final_trajectory_;
-          double current_time = (double)(ros::WallTime::now().toSec());
-          ROS_INFO("current_time %f", current_time);
-          plan_start_point(current_time);
-          //初始参数的输入
-          lattice_ic_ = {
-              d0,   // 初始的横向偏移值 [m]
-              dd0,  // 初始的横向速度 [m/s]
-              ddd0, // 初始的横向加速度 [m/s^2]
-
-              s0,                 // 初始的纵向值[m]
-              ds0,                // 初始的纵向速度[m/s]
-              dds0,               // 初始的纵向加速度[m/ss]
-              init_relative_time, // 规划起始点的时间
-
-              x_init, // 用来寻找匹配点
-              y_init,
-              z_init,
-              v_init,
-              a_init,
-
-              theta_init,
-              kappa_init,
-              dkappa_init,
-          };
-          std::cout << "x_init: " << x_init << " y_init: " << y_init << std::endl;
-          std::cout << "gps_x:  " << gps_.posX << " gps_y:  " << gps_.posY << std::endl;
-          // 创建起点参数
-          std::cout << "lattice_ic_x = " << lattice_ic_.x_init << " lattice_ic_y = " << lattice_ic_.y_init << std::endl;
-          TrajectoryPoint planning_init_point(lattice_ic_);
-          // 轨迹生成
-          PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标
-          // PlanningTarget planning_target(10, accumulated_s); // 目标 km/h
-          lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
-          best_path_ = planning_base_->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
-                      FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
-          ROS_INFO("plan_start_time = %f", plan_start_time);
-
-          // std::cout << "best_path_.size() = " << best_path_.size() << std::endl;
-          // std::cout << "pre_trajectory_.size = " << pre_trajectory_.size() << std::endl;
-          int final_path_size = best_path_.size() + stitch_trajectory_.size();
-          
-          
-          final_trajectory_.resize(final_path_size);
-          for (int i = 0; i < stitch_trajectory_.size(); ++i)
-          {
-            final_trajectory_[i] = stitch_trajectory_[i];
-          }
-          
-          for (int i = stitch_trajectory_.size(); i < final_path_size; ++i)
-          {
-            final_trajectory_[i] = best_path_[i-stitch_trajectory_.size()];
-          }
-          
-
-          // 发布轨迹
-          msg_gen::trajectory trajectory_d;
-          trajectory_d.pointsize = final_trajectory_.size();
-          for (int i = 0; i < final_trajectory_.size();++i){
-            msg_gen::TrajectoryPoint TrajectoryPoint_d;
-            TrajectoryPoint_d.x = final_trajectory_[i].x;
-            TrajectoryPoint_d.y = final_trajectory_[i].y;
-            TrajectoryPoint_d.z = final_trajectory_[i].z;
-            TrajectoryPoint_d.theta = final_trajectory_[i].theta;
-            TrajectoryPoint_d.kappa = final_trajectory_[i].kappa;
-            TrajectoryPoint_d.dkappa = final_trajectory_[i].dkappa;
-            TrajectoryPoint_d.v = final_trajectory_[i].v;
-            // std::cout << "trajectory v" << i <<  " = " << TrajectoryPoint_d.v << std::endl;
-            TrajectoryPoint_d.a = final_trajectory_[i].a;
-            TrajectoryPoint_d.relative_time = final_trajectory_[i].relative_time;
-            TrajectoryPoint_d.absolute_time = final_trajectory_[i].absolute_time;
-            TrajectoryPoint_d.d = final_trajectory_[i].d;
-            TrajectoryPoint_d.d_d = final_trajectory_[i].d_d;
-            TrajectoryPoint_d.d_dd = final_trajectory_[i].d_dd;
-            TrajectoryPoint_d.s = final_trajectory_[i].s;
-            TrajectoryPoint_d.s_d = final_trajectory_[i].s_d;
-            TrajectoryPoint_d.s_dd = final_trajectory_[i].s_dd;
-            TrajectoryPoint_d.s_ddd = final_trajectory_[i].s_ddd;
-            TrajectoryPoint_d.d_ddd = final_trajectory_[i].d_ddd;
-            trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
-          }
-
-          traj_points_.poses.clear();
-          traj_points_.header.frame_id = "world";
-          traj_points_.header.stamp = ros::Time::now();
-          for (int i = 0; i < final_trajectory_.size(); i++)
-          {
-            geometry_msgs::PoseStamped pose_stamp;
-            pose_stamp.header.frame_id = "world";
-            pose_stamp.header.stamp = ros::Time::now();
-            pose_stamp.pose.position.x = final_trajectory_[i].x;
-            pose_stamp.pose.position.y = final_trajectory_[i].y;
-            pose_stamp.pose.position.z = 0;
-            traj_points_.poses.push_back(pose_stamp);
-          }
-
-          trajectory_pub_.publish(trajectory_d);
-          rviz_pub_.publish(traj_points_);// rviz可视化
-
-          int update_pos = 10;
-          if (is_update_dynamic(traj_points_, update_pos+8)){
-            std::cout << "update planning start point" << std::endl;
-            s0 = best_path_[update_pos].s;
-            ds0 = best_path_[update_pos].s_d;
-            dds0 = best_path_[update_pos].s_dd;
-            d0 = best_path_[update_pos].d;
-            dd0 = best_path_[update_pos].d_d;
-            ddd0 = best_path_[update_pos].d_dd;
-
-            init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
-            x_init = best_path_[update_pos].x;
-            y_init = best_path_[update_pos].y;
-            z_init = 0;
-            v_init = best_path_[update_pos].v;
-            a_init = best_path_[update_pos].a;
-
-            theta_init = best_path_[update_pos].theta;
-            kappa_init = best_path_[update_pos].kappa;
-            dkappa_init = best_path_[update_pos].dkappa;
-          }
-
-        }
-
-        
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
-    
+  
+  // referenceLine_thread_ = new boost::thread(boost::bind(&referenceLine::referenceLine_thread, this));
+  
+  std::thread referenceLine_thread = std::thread(std::bind(&referenceLine::referenceLine_thread, this));
+  referenceLine_thread.detach();
 }
+
+void referenceLine::referenceLine_thread(){
+  // 订阅障碍物
+  Obstacle ob(true); // 实例化类，构造函数订阅障碍物 
+  ros::Rate loop_rate(10);
+  while (ros::ok())
+  {
+    if (referenceline_.poses.size() > 0)
+    {
+      // reference_smoothed_pub_.publish(referenceline_);
+      // referenceLine_pub_.publish(referenceline_);
+      referencePointsCalc(referenceline_); // 计算参考点的kappa、theta，添加flag确保只计算一次，减少重复计算
+    }
+
+    // 障碍物存储
+    std::vector<const Obstacle *> obstacles; // Apollo是这种类型
+    std::cout << "AllObstacle.size = " << AllObstacle.size() << std::endl;
+    for (size_t i = 0; i < AllObstacle.size(); ++i)
+    {
+      obstacles.emplace_back(&AllObstacle[i]);
+    }
+
+    // 障碍物发布rviz
+    if (obstacles.size() > 0)
+    {
+      visualization_msgs::MarkerArray obstacle_MarkerArray;
+      for (int i = 0; i < obstacles.size(); ++i)
+      {
+        visualization_msgs::Marker marker;
+        Turn_obstacles_into_squares(marker, obstacles[i], i);
+        obstacle_MarkerArray.markers.push_back(marker);
+      }
+      rviz_obstacle_pub_.publish(obstacle_MarkerArray);
+    }
+    // 确保gps和reference_points收到数据之后再进行
+    if (reference_points.size() > 0 && gps_flag_.size() > 0)
+    {
+      pre_trajectory_ = final_trajectory_;
+      double current_time = (double)(ros::WallTime::now().toSec());
+      ROS_INFO("current_time %f", current_time);
+      plan_start_point(current_time);
+      //初始参数的输入
+      lattice_ic_ = {
+          d0,   // 初始的横向偏移值 [m]
+          dd0,  // 初始的横向速度 [m/s]
+          ddd0, // 初始的横向加速度 [m/s^2]
+
+          s0,                 // 初始的纵向值[m]
+          ds0,                // 初始的纵向速度[m/s]
+          dds0,               // 初始的纵向加速度[m/ss]
+          init_relative_time, // 规划起始点的时间
+
+          x_init, // 用来寻找匹配点
+          y_init,
+          z_init,
+          v_init,
+          a_init,
+
+          theta_init,
+          kappa_init,
+          dkappa_init,
+      };
+      std::cout << "x_init: " << x_init << " y_init: " << y_init << std::endl;
+      std::cout << "gps_x:  " << gps_.posX << " gps_y:  " << gps_.posY << std::endl;
+      // 创建起点参数
+      std::cout << "lattice_ic_x = " << lattice_ic_.x_init << " lattice_ic_y = " << lattice_ic_.y_init << std::endl;
+      TrajectoryPoint planning_init_point(lattice_ic_);
+      // 轨迹生成
+      PlanningTarget planning_target(Config_.default_cruise_speed, accumulated_s); // 目标m/s
+      lon_decision_horizon = accumulated_s[accumulated_s.size() - 1];
+      best_path_ = planning_base_->plan(planning_init_point, planning_target, obstacles, accumulated_s, reference_points,
+                  FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
+      ROS_INFO("plan_start_time = %f", plan_start_time);
+
+      // std::cout << "best_path_.size() = " << best_path_.size() << std::endl;
+      // std::cout << "pre_trajectory_.size = " << pre_trajectory_.size() << std::endl;
+      // int final_path_size = best_path_.size() + stitch_trajectory_.size();
+      
+      
+      // final_trajectory_.clear();
+      // final_trajectory_.resize(final_path_size);
+      // for (int i = 0; i < stitch_trajectory_.size(); ++i)
+      // {
+      //   final_trajectory_[i] = stitch_trajectory_[i];
+      // }
+      
+      // for (int i = stitch_trajectory_.size(); i < final_path_size; ++i)
+      // {
+      //   final_trajectory_[i] = best_path_[i-stitch_trajectory_.size()];
+      // }
+      
+
+      // 发布轨迹
+      msg_gen::trajectory trajectory_d;
+      trajectory_d.trajectorypoint.clear();
+      trajectory_d.pointsize = best_path_.size();
+      for (int i = 0; i < best_path_.size();++i){
+        msg_gen::TrajectoryPoint TrajectoryPoint_d;
+        TrajectoryPoint_d.x = best_path_[i].x;
+        TrajectoryPoint_d.y = best_path_[i].y;
+        TrajectoryPoint_d.z = best_path_[i].z;
+        TrajectoryPoint_d.theta = best_path_[i].theta;
+        TrajectoryPoint_d.kappa = best_path_[i].kappa;
+        TrajectoryPoint_d.dkappa = best_path_[i].dkappa;
+        TrajectoryPoint_d.v = best_path_[i].v;
+        // std::cout << "trajectory v" << i <<  " = " << TrajectoryPoint_d.v << std::endl;
+        TrajectoryPoint_d.a = best_path_[i].a;
+        TrajectoryPoint_d.relative_time = best_path_[i].relative_time;
+        TrajectoryPoint_d.absolute_time = best_path_[i].absolute_time;
+        TrajectoryPoint_d.d = best_path_[i].d;
+        TrajectoryPoint_d.d_d = best_path_[i].d_d;
+        TrajectoryPoint_d.d_dd = best_path_[i].d_dd;
+        TrajectoryPoint_d.s = best_path_[i].s;
+        TrajectoryPoint_d.s_d = best_path_[i].s_d;
+        TrajectoryPoint_d.s_dd = best_path_[i].s_dd;
+        TrajectoryPoint_d.s_ddd = best_path_[i].s_ddd;
+        TrajectoryPoint_d.d_ddd = best_path_[i].d_ddd;
+        trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
+      }
+
+      traj_points_.poses.clear();
+      traj_points_.header.frame_id = "world";
+      traj_points_.header.stamp = ros::Time::now();
+      for (int i = 0; i < best_path_.size(); ++i)
+      {
+        geometry_msgs::PoseStamped pose_stamp;
+        pose_stamp.header.frame_id = "world";
+        pose_stamp.header.stamp = ros::Time::now();
+        pose_stamp.pose.position.x = best_path_[i].x;
+        pose_stamp.pose.position.y = best_path_[i].y;
+        pose_stamp.pose.position.z = 0;
+        traj_points_.poses.push_back(pose_stamp);
+      }
+
+      trajectory_pub_.publish(trajectory_d);
+      rviz_pub_.publish(traj_points_);// rviz可视化
+
+      int update_pos = 10;
+      if (is_update_dynamic(traj_points_, update_pos+8)){
+        std::cout << "update planning start point" << std::endl;
+        s0 = best_path_[update_pos].s;
+        ds0 = best_path_[update_pos].s_d;
+        dds0 = best_path_[update_pos].s_dd;
+        d0 = best_path_[update_pos].d;
+        dd0 = best_path_[update_pos].d_d;
+        ddd0 = best_path_[update_pos].d_dd;
+
+        init_relative_time = 0; // best_path_[update_pos].relative_time，动态障碍物的起始时间跟这个保持一致
+        x_init = best_path_[update_pos].x;
+        y_init = best_path_[update_pos].y;
+        z_init = 0;
+        v_init = best_path_[update_pos].v;
+        a_init = best_path_[update_pos].a;
+
+        theta_init = best_path_[update_pos].theta;
+        kappa_init = best_path_[update_pos].kappa;
+        dkappa_init = best_path_[update_pos].dkappa;
+      }
+
+    }
+
+    
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+}
+
 
 void referenceLine::referenceLine_split(Eigen::MatrixXd &hdmap_way_points) {
     average_interpolation(hdmap_way_points, path_point_after_interpolation_, 0.2, 0.6);
@@ -613,7 +627,7 @@ bool referenceLine::is_update_dynamic(nav_msgs::Path &trj_point_array, int size)
   double xx = trj_point_array.poses[size].pose.position.x;
   double yy = trj_point_array.poses[size].pose.position.y;
   double distance = sqrt(pow(pp_x - xx, 2) + pow(pp_y - yy, 2));
-  if (distance < 1) //接近了
+  if (distance < 2) //接近了
   {
     is_update = true;
   }

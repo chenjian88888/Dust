@@ -25,6 +25,7 @@
 #include <utility>
 #include <coin/IpIpoptApplication.hpp>
 #include <coin/IpSolveStatistics.hpp>
+#include <thread>
 
 #include "cos_theta_ipopt_interface.h"
 #include "fem_pos_deviation_osqp_interface.h"
@@ -53,7 +54,7 @@ class referenceLine
 {
 public:
 	referenceLine();
-	~referenceLine() = default;
+	~referenceLine();
 	
 	/**
 	 * @brief 全局路径的回调函数
@@ -72,6 +73,11 @@ public:
 	 * 
 	 */
 	void run();
+	/**
+	 * @brief 为planning模块单独创建一个线程
+	 * 
+	 */
+	void referenceLine_thread();
 
 	/**
 	 * @brief 对参考线进行操作
@@ -146,7 +152,9 @@ private:
   	ros::Publisher trajectory_pub_, rviz_pub_, rviz_obstacle_pub_, reference_smoothed_pub_;
   	// subscriber
   	ros::Subscriber routing_sub_, gps_sub_;
-    
+	// thread
+	boost::thread *referenceLine_thread_;
+
 	std::shared_ptr<PlanningBase> planning_base_;
 
 	// param
