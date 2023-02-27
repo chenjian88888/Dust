@@ -116,7 +116,7 @@ public:
      * 控制没跟上：规划起点根据车辆动力学合理外推，plan_start_time=current_time+0.1;
      *
      */
-    void plan_start_point(double &tt);
+    std::vector<TrajectoryPoint> plan_start_point(double &tt);
 
 	bool is_update_dynamic(nav_msgs::Path &trj_point_array, int size);
 
@@ -208,7 +208,7 @@ private:
     double lon_decision_horizon = 0;// 前视距离
 
 	// class
-    InitialConditions lattice_ic_;
+    // InitialConditions lattice_ic_;
 	DiscretizedTrajectory best_path_; //最佳路径
 	DiscretizedTrajectory pre_trajectory_;// 上一帧的轨迹
 	DiscretizedTrajectory stitch_trajectory_;// 拼接轨迹

@@ -29,9 +29,7 @@ std::vector<PathPoint> ToDiscretizedReferenceLine(
     return path_points;
 }
 
-lattice::lattice(){
-    
-}
+lattice::lattice(){}
 
 
 DiscretizedTrajectory lattice::plan(
@@ -42,9 +40,9 @@ DiscretizedTrajectory lattice::plan(
     const std::vector<ReferencePoint> &reference_points, const bool &lateral_optimization,
     const double &init_relative_time, const double lon_decision_horizon, const double &plan_start_time)
 {
-  //ROS_WARN("start_lattice");
   DiscretizedTrajectory Optim_trajectory;
   // 1. compute the matched point of the init planning point on the reference line.经过投影后的匹配点
+  // reference_points中有累积的s值
   ReferencePoint matched_point = PathMatcher::MatchToPath(reference_points, planning_init_point.path_point().x,
                                                           planning_init_point.path_point().y);
 

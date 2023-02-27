@@ -13,7 +13,7 @@ namespace common
 
     double NormalizeAngle(const double angle)
     {
-      double a = std::fmod(angle + M_PI, 2.0 * M_PI);
+      double a = std::fmod(angle + M_PI, 2.0 * M_PI);// 取余
       if (a < 0.0)
       {
         a += (2.0 * M_PI);
@@ -59,7 +59,7 @@ namespace common
       }
 
       const double r = (t - t0) / (t1 - t0);
-      const double a = a0_n + d * r;
+      const double a = a0_n + d * r;// 线性插值
       return NormalizeAngle(a);
     }
 
