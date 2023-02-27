@@ -54,7 +54,7 @@ class referenceLine
 {
 public:
 	referenceLine();
-	~referenceLine();
+	~referenceLine() = default;
 	
 	/**
 	 * @brief 全局路径的回调函数
@@ -149,11 +149,9 @@ private:
 	// handle
 	ros::NodeHandle n_;
 	// publisher
-  	ros::Publisher trajectory_pub_, rviz_pub_, rviz_obstacle_pub_, reference_smoothed_pub_;
+  	ros::Publisher trajectory_pub_, rviz_pub_, rviz_obstacle_pub_;
   	// subscriber
   	ros::Subscriber routing_sub_, gps_sub_;
-	// thread
-	boost::thread *referenceLine_thread_;
 
 	std::shared_ptr<PlanningBase> planning_base_;
 
@@ -193,7 +191,7 @@ private:
     double ds0;                  //初始的纵向速度[m/s]
     double dds0;                 //初始的纵向加速度[m/ss]
     double init_relative_time;   //规划起始点的时间
-    double plan_start_time = 0;        //规划开始的时间
+    double plan_start_time;        //规划开始的时间
     double x_init;
     double y_init;
     double z_init;
@@ -211,8 +209,6 @@ private:
     // InitialConditions lattice_ic_;
 	DiscretizedTrajectory best_path_; //最佳路径
 	DiscretizedTrajectory pre_trajectory_;// 上一帧的轨迹
-	DiscretizedTrajectory stitch_trajectory_;// 拼接轨迹
-	DiscretizedTrajectory final_trajectory_;// 最终的轨迹
 	
 };
 

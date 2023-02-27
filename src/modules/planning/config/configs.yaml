@@ -17,7 +17,7 @@ FLAGS_lon_collision_overtake_buffer: 5.0    #  Longitudinal collision buffer for
 FLAGS_weight_lon_objective: 10.0   #  Weight of longitudinal travel cost
 FLAGS_weight_lon_jerk: 1.0      #  Weight of longitudinal jerk cost
 FLAGS_weight_lon_collision: 3.0   #  Weight of longitudinal collision cost
-FLAGS_weight_centripetal_acceleration: 1.5  #  Weight of centripetal acceleration
+FLAGS_weight_centripetal_acceleration: 2.5  #  Weight of centripetal acceleration1.5
 FLAGS_weight_lat_offset: 2.0    #  Weight of lateral offset cost
 FLAGS_weight_lat_comfort: 2.0  #  Weight of lateral comfort cost
 
@@ -58,7 +58,7 @@ FLAGS_numerical_epsilon: 0.0000001         # 横向优化的边界缓冲
 FLAGS_nudge_buffer: 0.4                  # 用于二次规划横向优化的微移缓冲
 kSampleDistance: 0.25 
 FLAGS_lon_collision_buffer: 4.0     # "The longitudinal buffer to keep distance to other vehicles"
-FLAGS_lat_collision_buffer: 0.2           # Lattice采样规划的碰撞buffer 
+FLAGS_lat_collision_buffer: 0.5           # Lattice采样规划的碰撞buffer 0.2
 
 #  VehicleParam
 min_turn_radius: 5.05386147161 

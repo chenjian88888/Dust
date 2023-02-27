@@ -41,10 +41,6 @@ referenceLine::referenceLine(){
     
 }
 
-referenceLine::~referenceLine(){
-  delete referenceLine_thread_;
-}
-
 void referenceLine::routingCallback(const geometry_msgs::PoseArray &routing){
     routing_waypoints_ = Eigen::MatrixXd::Zero(routing.poses.size(), 3);
     // 确保一开始只订阅一次
@@ -93,29 +89,19 @@ void Turn_obstacles_into_squares(visualization_msgs::Marker &marker,
 }
 
 void  referenceLine::run() {
-  
-  // referenceLine_thread_ = new boost::thread(boost::bind(&referenceLine::referenceLine_thread, this));
-  
-  std::thread referenceLine_thread = std::thread(std::bind(&referenceLine::referenceLine_thread, this));
-  referenceLine_thread.detach();
-}
-
-void referenceLine::referenceLine_thread(){
   // 订阅障碍物
   Obstacle ob(true); // 实例化类，构造函数订阅障碍物 
   ros::Rate loop_rate(10);
   while (ros::ok())
   {
+
     if (referenceline_.poses.size() > 0)
     {
-      // reference_smoothed_pub_.publish(referenceline_);
-      // referenceLine_pub_.publish(referenceline_);
       referencePointsCalc(referenceline_); // 计算参考点的kappa、theta，添加flag确保只计算一次，减少重复计算
     }
 
     // 障碍物存储
     std::vector<const Obstacle *> obstacles; // Apollo是这种类型
-    std::cout << "AllObstacle.size = " << AllObstacle.size() << std::endl;
     for (size_t i = 0; i < AllObstacle.size(); ++i)
     {
       obstacles.emplace_back(&AllObstacle[i]);
@@ -173,10 +159,12 @@ void referenceLine::referenceLine_thread(){
                   FLAGS_lateral_optimization, init_relative_time, lon_decision_horizon, plan_start_time);
 
       ROS_INFO("plan_start_time = %f", plan_start_time);
-      pre_trajectory_.insert(pre_trajectory_.end(), stitching_trajectory.begin(), stitching_trajectory.end()-1);// 规划起点被同时包含在了stitching和best_path中，因此需要减1
-      ROS_INFO("stitch_pre_trajectory_.size = %f", pre_trajectory_.size());
+      pre_trajectory_.clear();
+      pre_trajectory_.insert(pre_trajectory_.end(), stitching_trajectory.begin(), stitching_trajectory.end() - 1); // 规划起点被同时包含在了stitching和best_path中，因此需要减1
+      ROS_INFO("stitch_.size = %i", stitching_trajectory.size());
+      ROS_INFO("stitch_pre_trajectory_.size = %i", pre_trajectory_.size());
       pre_trajectory_.insert(pre_trajectory_.end(), best_path_.begin(), best_path_.end());
-      ROS_INFO("best_stitch_pre_trajectory_.size = %f", pre_trajectory_.size());
+      ROS_INFO("best_stitch_pre_trajectory_.size = %i", pre_trajectory_.size());
 
       for (int i = 0; i < pre_trajectory_.size();++i){
         ROS_INFO("relative_time_%i = %f absolute_time = %f", i, pre_trajectory_[i].relative_time, pre_trajectory_[i].absolute_time);
@@ -200,41 +188,41 @@ void referenceLine::referenceLine_thread(){
         // 发布轨迹
         msg_gen::trajectory trajectory_d;
       trajectory_d.trajectorypoint.clear();
-      trajectory_d.pointsize = best_path_.size();
-      for (int i = 0; i < best_path_.size();++i){
+      trajectory_d.pointsize = pre_trajectory_.size();
+      for (int i = 0; i < pre_trajectory_.size();++i){
         msg_gen::TrajectoryPoint TrajectoryPoint_d;
-        TrajectoryPoint_d.x = best_path_[i].x;
-        TrajectoryPoint_d.y = best_path_[i].y;
-        TrajectoryPoint_d.z = best_path_[i].z;
-        TrajectoryPoint_d.theta = best_path_[i].theta;
-        TrajectoryPoint_d.kappa = best_path_[i].kappa;
-        TrajectoryPoint_d.dkappa = best_path_[i].dkappa;
-        TrajectoryPoint_d.v = best_path_[i].v;
+        TrajectoryPoint_d.x = pre_trajectory_[i].x;
+        TrajectoryPoint_d.y = pre_trajectory_[i].y;
+        TrajectoryPoint_d.z = pre_trajectory_[i].z;
+        TrajectoryPoint_d.theta = pre_trajectory_[i].theta;
+        TrajectoryPoint_d.kappa = pre_trajectory_[i].kappa;
+        TrajectoryPoint_d.dkappa = pre_trajectory_[i].dkappa;
+        TrajectoryPoint_d.v = pre_trajectory_[i].v;
         // std::cout << "trajectory v" << i <<  " = " << TrajectoryPoint_d.v << std::endl;
-        TrajectoryPoint_d.a = best_path_[i].a;
-        TrajectoryPoint_d.relative_time = best_path_[i].relative_time;
-        TrajectoryPoint_d.absolute_time = best_path_[i].absolute_time;
-        TrajectoryPoint_d.d = best_path_[i].d;
-        TrajectoryPoint_d.d_d = best_path_[i].d_d;
-        TrajectoryPoint_d.d_dd = best_path_[i].d_dd;
-        TrajectoryPoint_d.s = best_path_[i].s;
-        TrajectoryPoint_d.s_d = best_path_[i].s_d;
-        TrajectoryPoint_d.s_dd = best_path_[i].s_dd;
-        TrajectoryPoint_d.s_ddd = best_path_[i].s_ddd;
-        TrajectoryPoint_d.d_ddd = best_path_[i].d_ddd;
+        TrajectoryPoint_d.a = pre_trajectory_[i].a;
+        TrajectoryPoint_d.relative_time = pre_trajectory_[i].relative_time;
+        TrajectoryPoint_d.absolute_time = pre_trajectory_[i].absolute_time;
+        TrajectoryPoint_d.d = pre_trajectory_[i].d;
+        TrajectoryPoint_d.d_d = pre_trajectory_[i].d_d;
+        TrajectoryPoint_d.d_dd = pre_trajectory_[i].d_dd;
+        TrajectoryPoint_d.s = pre_trajectory_[i].s;
+        TrajectoryPoint_d.s_d = pre_trajectory_[i].s_d;
+        TrajectoryPoint_d.s_dd = pre_trajectory_[i].s_dd;
+        TrajectoryPoint_d.s_ddd = pre_trajectory_[i].s_ddd;
+        TrajectoryPoint_d.d_ddd = pre_trajectory_[i].d_ddd;
         trajectory_d.trajectorypoint.emplace_back(TrajectoryPoint_d);
       }
 
       traj_points_.poses.clear();
       traj_points_.header.frame_id = "world";
       traj_points_.header.stamp = ros::Time::now();
-      for (int i = 0; i < best_path_.size(); ++i)
+      for (int i = 0; i < pre_trajectory_.size(); ++i)
       {
         geometry_msgs::PoseStamped pose_stamp;
         pose_stamp.header.frame_id = "world";
         pose_stamp.header.stamp = ros::Time::now();
-        pose_stamp.pose.position.x = best_path_[i].x;
-        pose_stamp.pose.position.y = best_path_[i].y;
+        pose_stamp.pose.position.x = pre_trajectory_[i].x;
+        pose_stamp.pose.position.y = pre_trajectory_[i].y;
         pose_stamp.pose.position.z = 0;
         traj_points_.poses.push_back(pose_stamp);
       }
@@ -266,10 +254,10 @@ void referenceLine::referenceLine_thread(){
 
     }
 
-    
     ros::spinOnce();
     loop_rate.sleep();
   }
+
 }
 
 
@@ -501,7 +489,6 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
         init_point.set_v(v_init);
         init_point.set_a(a_init);
         init_point.set_relative_time(0.0);
-
         return std::vector<TrajectoryPoint>(1, init_point);
     }
     else
@@ -527,7 +514,6 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
             // std::cout << "best_path_.size1: " << best_path_.size() << std::endl;
             if ( pre_trajectory_[i].absolute_time <= current_time &&  pre_trajectory_[i + 1].absolute_time > current_time){
                 index = i;
-                std::cout << "time match point index: " << i << std::endl;
                 break;
             }
         }
@@ -543,12 +529,14 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
         // 误差向量
         Eigen::Matrix<double, 2, 1> d_err;
         d_err << x_cur - pre_x_desire, y_cur - pre_y_desire;
-        double lon_err = abs(tor.transpose() * d_err);
-        double lat_err = abs(nor.transpose() * d_err);
-        printf("pre_x_desire = %f 米\n", pre_x_desire);// 局部路径
-        printf("pre_y_desire = %f 米\n", pre_y_desire);
-        printf("lon_err = %f 米\n", lon_err);
-        printf("lat_err = %f 米\n", lat_err);
+        double lon_err = abs(d_err.transpose()*tor);
+        double lat_err = abs(d_err.transpose()*nor);
+
+        std::size_t position_matched_index = pre_trajectory_.QueryNearestPoint({x_cur, y_cur});
+        printf("pre_x_desire = %f m\n", pre_x_desire);// 局部路径
+        printf("pre_y_desire = %f m\n", pre_y_desire);
+        printf("lon_err = %f m\n", lon_err);
+        printf("lat_err = %f m\n", lat_err);
         // 如果纵向误差大于2.5或者横向误差大于0.5认为控制没跟上
         if (lon_err > 2.5 || lat_err > 0.5){
             ROS_INFO("out of control, use dynamic to deduce");
@@ -576,7 +564,6 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
             init_point.set_v(v_init);
             init_point.set_a(a_init);
             init_point.set_relative_time(0.0);
-
             return std::vector<TrajectoryPoint>(1, init_point);
         }
         else {
@@ -603,7 +590,7 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
           // tor << cos(theta_init), sin(theta_init);
           // nor << -sin(theta_init), cos(theta_init);
           // Eigen::Matrix<double, 2, 1> a_tor = pre_trajectory_[index_good].a * tor;
-          // Eigen::Matrix<double, 2, 1> a_nor = pre_trajectory_[index_good].v * pre_trajectory_[index_good].v * kappa_init * nor;
+          // Eigen::Matrix<double, 2, 1> a_nor = pre_trajectory_[index_good].v * pre_trajectory__[index_good].v * kappa_init * nor;
           // dds0 = a_tor[0] + a_nor[0];
           // ddd0 = a_tor[1] + a_nor[1];
           double s0 = pre_trajectory_[index_good].s;
@@ -617,7 +604,8 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
           // 轨迹拼接
           std::size_t position_matched_index = pre_trajectory_.QueryNearestPoint({x_cur, y_cur});
           std::cout << "poisition match point index: " << position_matched_index << std::endl;
-          auto matched_index = std::min(index, position_matched_index);// 时间匹配点和位置匹配点index最小的
+          std::cout << "time match point index: " << index << std::endl;
+          auto matched_index = std::min(index, static_cast<int>(position_matched_index));// 时间匹配点和位置匹配点index最小的
           std::vector<TrajectoryPoint> stitching_trajectory(
           pre_trajectory_.begin() + std::max(0, static_cast<int>(matched_index - 1)),
           pre_trajectory_.begin() + index_good + 1);// 取不到右端点因此需要加1

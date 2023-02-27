@@ -82,8 +82,6 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         obs.obstacle_length = msgs->obstacle[i].length;
         obs.obstacle_width = msgs->obstacle[i].width;
         obs.obstacle_height = msgs->obstacle[i].height;
-        std::cout << "car radius = " << obs.obstacle_radius << " length = " << obs.obstacle_length
-                  << " width = " << obs.obstacle_width << std::endl;
       }
       else if (msgs->obstacle[i].type.SimOne_Obstacle_Type == 4) //圆形：Pedestrian
       {
@@ -100,7 +98,7 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         ob_vector.emplace_back(ob_left_buttom);  //右上角
         ob_vector.emplace_back(ob_left_front);   //左上角
         ob_vector.emplace_back(ob_right_buttom); //左下角
-        for (size_t j = 0; j < ob_vector.size(); j++)
+        for (size_t j = 0; j < ob_vector.size(); ++j)
         {
           geometry_msgs::Pose sds;
           sds.position.x = ob_vector[j].x;
@@ -113,7 +111,6 @@ void Obstacle::setObstacles(const msg_gen::obstacle::ConstPtr &msgs)
         obs.obstacle_length = msgs->obstacle[i].length;
         obs.obstacle_width = msgs->obstacle[i].width;
         obs.obstacle_height = msgs->obstacle[i].height;
-        std::cout << "people length = " << obs.obstacle_length << " width = " << obs.obstacle_width << std::endl;
       }
       // else if (msgs->objects[i].shape.type == 2) //多边形:未知
       // {

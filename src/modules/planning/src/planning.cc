@@ -9,10 +9,5 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "planning");
     ROS_INFO("planning start");
     referenceLine rl;
-    rl.run();
-    while (ros::ok)
-    {
-        /* code */
-    }
-    
+    rl.run();    
 }

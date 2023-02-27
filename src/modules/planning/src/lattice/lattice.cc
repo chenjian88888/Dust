@@ -75,7 +75,6 @@ DiscretizedTrajectory lattice::plan(
                                            init_s, ptr_path_time_graph, reference_points);
   // Get instance of collision checker and constraint checker
   CollisionChecker collision_checker(obstacles, init_s[0], init_d[0], reference_points, ptr_path_time_graph);
-
   // 5.轨迹拼接和最后的筛选，总是得到结合的最好的轨迹对，返回第一次无碰撞的轨迹
   while (trajectory_evaluator.has_more_trajectory_pairs())
   {
@@ -115,10 +114,10 @@ DiscretizedTrajectory lattice::plan(
         continue;
       }
       
+      
       //碰撞检测
       if (collision_checker.InCollision(combined_trajectory))
       {
-        ROS_INFO("collision");
         continue;
       }
     }

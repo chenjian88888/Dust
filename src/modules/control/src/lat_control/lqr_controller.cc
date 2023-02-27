@@ -11,9 +11,9 @@ lqrControl::lqrControl(const double kp, const double ki, const double kd) : cont
     vy = 0;
 
     // 前轮侧偏刚度
-    cf = -146424.26;
+    cf = -321972.05;
     // 后轮侧偏刚度
-    cr = -146424.26;
+    cr = -321972.05;
 
     m = 1696;
 
@@ -87,8 +87,12 @@ std::array<double, 5> lqrControl::cal_err_k(const std::vector<std::pair<double, 
     std::vector<double>& trj_thetas, std::vector<double>& trj_kappas, double current_post_x, 
     double current_post_y, double car_yaw, int &index)
 {   
-    current_post_x += this->vx * 0.3;
-    current_post_y += this->vy * 0.3;
+    // current_post_x = current_post_x + this->vx * std::cos(car_yaw) * 0.5 + this->vy * std::sin(car_yaw) * 0.5;
+    // current_post_y = current_post_y + this->vy * std::cos(car_yaw) * 0.5 - this->vx * std::sin(car_yaw) * 0.5;
+    // std::cout << "横向预测量 = " << this->vy * std::cos(car_yaw) * 0.5 - this->vx * std::sin(car_yaw) * 0.5
+    // << "  纵向预测量 = " << this->vx * std::cos(car_yaw) * 0.5 + this->vy * std::sin(car_yaw) * 0.5 
+    // << " 航向角 = "<< car_yaw << std::endl;
+
     std::array<double, 5> err_k;
     std::cout << "gps_xy = " << current_post_x << "  " << current_post_y << std::endl;
     
@@ -160,13 +164,13 @@ Eigen::Matrix<double, 1, 4> lqrControl::cal_k(std::array<double, 5> err_k)
     // // 设置成单位矩阵
     Eigen::Matrix4d Q;
     Q.setIdentity(4, 4);
-    Q(0, 0) = 60;
-    Q(1, 1) = 1;
-    Q(2, 2) = 1;
-    Q(3, 3) = 1;
+    Q(0, 0) = 25;
+    Q(1, 1) = 3;
+    Q(2, 2) = 10;
+    Q(3, 3) = 4;
 
     Eigen::Matrix<double, 1, 1> R;
-    R(0, 0) = 35.0;
+    R(0, 0) = 15.0;
     // MatrixXd矩阵只能用(),VectorXd不仅能用()还能用[]
     Eigen::Matrix<double, 1, 4> k = cal_dlqr(A, B, Q, R);
 
