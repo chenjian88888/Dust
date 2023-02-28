@@ -602,22 +602,26 @@ std::vector<TrajectoryPoint> referenceLine::plan_start_point(double &current_tim
           plan_start_time = pre_trajectory_[index_good].absolute_time;
           
           // 轨迹拼接
-          std::size_t position_matched_index = pre_trajectory_.QueryNearestPoint({x_cur, y_cur});
           std::cout << "poisition match point index: " << position_matched_index << std::endl;
           std::cout << "time match point index: " << index << std::endl;
-          auto matched_index = std::min(index, static_cast<int>(position_matched_index));// 时间匹配点和位置匹配点index最小的
-          std::vector<TrajectoryPoint> stitching_trajectory(
-          pre_trajectory_.begin() + std::max(0, static_cast<int>(matched_index - 1)),
-          pre_trajectory_.begin() + index_good + 1);// 取不到右端点因此需要加1
+          // auto matched_index = std::min(index_good, static_cast<int>(position_matched_index));// 时间匹配点和位置匹配点index最小的
+          if (index_good > 20){
+            std::vector<TrajectoryPoint> stitching_trajectory(pre_trajectory_.begin() + index_good - 19, 
+                                                              pre_trajectory_.begin() + index_good + 1);// 取不到右端点因此需要加1
+          } else{
+            std::vector<TrajectoryPoint> stitching_trajectory(pre_trajectory_.begin(), 
+                                                              pre_trajectory_.begin() + index_good + 1);// 取不到右端点因此需要加1
+          }
+          
 
-          auto time_matched_point = pre_trajectory_.TrajectoryPointAt(std::max(0, static_cast<int>(matched_index - 1)));
-          const double zero_s = time_matched_point.path_point().s;
+          // auto time_matched_point = pre_trajectory_.TrajectoryPointAt(index_good);
+          const double zero_s = stitching_trajectory[0].path_point().s;
           for (auto& tp : stitching_trajectory) {
             // if (!tp.has_path_point()) {
             //   return ComputeReinitStitchingTrajectory(vehicle_state);
             // }
             tp.set_relative_time(tp.relative_time - 
-                                 pre_trajectory_[std::max(0, static_cast<int>(matched_index - 1))].relative_time);
+                                 stitching_trajectory[0].relative_time);
             // tp.set_absolute_time(tp.absolute_time - 
             //                      (pre_trajectory_[std::max(0, static_cast<int>(matched_index - 1))].absolute_time + pre_trajectory_[0].absolute_time));
             tp.set_s(tp.path_point().s - zero_s);
