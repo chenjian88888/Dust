@@ -87,8 +87,8 @@ std::array<double, 5> lqrControl::cal_err_k(const std::vector<std::pair<double, 
     std::vector<double>& trj_thetas, std::vector<double>& trj_kappas, double current_post_x, 
     double current_post_y, double car_yaw, int &index)
 {   
-    // current_post_x = current_post_x + this->vx * std::cos(car_yaw) * 0.5 + this->vy * std::sin(car_yaw) * 0.5;
-    // current_post_y = current_post_y + this->vy * std::cos(car_yaw) * 0.5 - this->vx * std::sin(car_yaw) * 0.5;
+    current_post_x = current_post_x + this->vx * 0.5;
+    current_post_y = current_post_y + this->vy * 0.5;
     // std::cout << "横向预测量 = " << this->vy * std::cos(car_yaw) * 0.5 - this->vx * std::sin(car_yaw) * 0.5
     // << "  纵向预测量 = " << this->vx * std::cos(car_yaw) * 0.5 + this->vy * std::sin(car_yaw) * 0.5 
     // << " 航向角 = "<< car_yaw << std::endl;
