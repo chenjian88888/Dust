@@ -37,9 +37,10 @@ lqrControl::lqrControl(const double kp, const double ki, const double kd) : cont
 
 
 double lqrControl::calculateCmd(const std::vector<RefPoint>& targetPath, const msg_gen::gps &gps) {
-    this->vx = gps.velX;
-    this->vy = gps.velY;
-    // std::cout << "vehicle_cor vy: " << this->vy << std::endl;
+    double car_yaw = gps.oriZ;
+    this->vx = gps.velX * std::cos(car_yaw) + gps.velY * std::sin(car_yaw);
+    this->vy = gps.velY * std::cos(car_yaw) - gps.velX * std::sin(car_yaw);
+    std::cout << "vehicle_cor vy: " << this->vy << std::endl;
     //  变量再分配
     std::vector<std::pair<double, double>> trj_point_array;
 	for (auto& Point : targetPath) {
@@ -56,7 +57,6 @@ double lqrControl::calculateCmd(const std::vector<RefPoint>& targetPath, const m
 	
 	double currentPositionX = gps.posX;
 	double currentPositionY = gps.posY;
-	double car_yaw = gps.oriZ;
 	double out_angle = theta_angle(trj_point_array, trj_thetas, trj_kappas, currentPositionX, currentPositionY, car_yaw);
     return out_angle;
 }
@@ -87,19 +87,11 @@ std::array<double, 5> lqrControl::cal_err_k(const std::vector<std::pair<double, 
     std::vector<double>& trj_thetas, std::vector<double>& trj_kappas, double current_post_x, 
     double current_post_y, double car_yaw, int &index)
 {   
-    current_post_x = current_post_x + this->vx * 0.5;
-    current_post_y = current_post_y + this->vy * 0.5;
-    // std::cout << "横向预测量 = " << this->vy * std::cos(car_yaw) * 0.5 - this->vx * std::sin(car_yaw) * 0.5
-    // << "  纵向预测量 = " << this->vx * std::cos(car_yaw) * 0.5 + this->vy * std::sin(car_yaw) * 0.5 
-    // << " 航向角 = "<< car_yaw << std::endl;
+    current_post_x = current_post_x + this->vx*0.3*std::cos(car_yaw) - this->vy*0.3*std::sin(car_yaw);
+    current_post_y = current_post_y + this->vy*0.3*std::cos(car_yaw) + this->vx*0.3*std::sin(car_yaw);
 
     std::array<double, 5> err_k;
-    std::cout << "gps_xy = " << current_post_x << "  " << current_post_y << std::endl;
     
-    if (index < trj_point_array.size() - 1){
-        index = index + 1;
-    }
-    std::cout << index << "_xy: " << trj_point_array[index].first << "  " << trj_point_array[index].second << std::endl;
     // 找到index后，开始求解投影点
     Eigen::Matrix<double, 2, 1> tor;
     tor << cos(trj_thetas[index]), sin(trj_thetas[index]);
@@ -171,7 +163,6 @@ Eigen::Matrix<double, 1, 4> lqrControl::cal_k(std::array<double, 5> err_k)
 
     Eigen::Matrix<double, 1, 1> R;
     R(0, 0) = 15.0;
-    // MatrixXd矩阵只能用(),VectorXd不仅能用()还能用[]
     Eigen::Matrix<double, 1, 4> k = cal_dlqr(A, B, Q, R);
 
     return k;
@@ -229,7 +220,7 @@ double lqrControl::cal_forword_angle(Eigen::Matrix<double, 1, 4> k,
     //投影点的曲率final_path.k[index]
     double point_curvature = err_k[4];
     double forword_angle =
-        1.0 * (wheel_base * point_curvature + kv * vx * vx * point_curvature -
+        1.5 * (wheel_base * point_curvature + kv * vx * vx * point_curvature -
         k3 * (b * point_curvature + a * m * vx * vx * point_curvature / cr / (a + b)));
     return forword_angle;
 }

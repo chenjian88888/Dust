@@ -206,7 +206,6 @@ private:
     double lon_decision_horizon = 0;// 前视距离
 
 	// class
-    // InitialConditions lattice_ic_;
 	DiscretizedTrajectory best_path_; //最佳路径
 	DiscretizedTrajectory pre_trajectory_;// 上一帧的轨迹
 	
