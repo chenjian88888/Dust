@@ -51,7 +51,7 @@ An autonomous vehicle planning and control software's frame.
 ### Prerequisites
 
 Alternatively, simply perform the following steps：
-
+在scripts文件夹下执行以下命令。
 * ros
 
   ```sh
