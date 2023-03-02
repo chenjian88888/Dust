@@ -5,10 +5,7 @@
     <arg name="which_controller" value="0"/>    
     <param name="which_controllers" value="$(arg which_controller)"/>
 
-    
 
-    <!-- ui界面 -->        
-    <!-- <node pkg="ui_console" type="ui_console" name="interface_console" output="screen" /> -->
      <!-- 全局规划 -->
     <!-- <node pkg="planning" type="planning_node" name="planning" output="screen" />
     <param name="use_sim_time" value="false"/> -->
